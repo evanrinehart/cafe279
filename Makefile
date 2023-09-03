@@ -1,3 +1,5 @@
+EXE_NAME = game
+
 RAYLIB_VERSION = 4.5.0
 RAYLIB_PATH = vendor/raylib/src
 RAYLIB_URL = https://github.com/raysan5/raylib.git
@@ -6,14 +8,12 @@ SQLITE_NAME = sqlite-amalgamation-3430000
 SQLITE_PATH = vendor/sqlite3/$(SQLITE_NAME)
 SQLITE_URL = https://www.sqlite.org/2023/$(SQLITE_NAME).zip
 
-EXE_NAME = game
 CC = gcc
+
 CFLAGS = \
 	-g \
 	-O2 \
 	-I. \
-	-I$(RAYLIB_PATH) \
-	-I$(SQLITE_PATH) \
 	-Wall \
 	-Werror \
 	-Wno-error=unused-variable \
@@ -29,12 +29,10 @@ OBJECTS = \
 	symbols.o \
 	doodad.o
 
-ARCHIVES = $(RAYLIB_PATH)/libraylib.a
+$(EXE_NAME) : $(OBJECTS) main.o sqlite3.o libraylib.a
+	gcc -o $(EXE_NAME) $(OBJECTS) main.o sqlite3.o libraylib.a $(LIBS)
 
-$(EXE_NAME) : $(ARCHIVES) $(OBJECTS) main.o sqlite3.o
-	gcc -o $(EXE_NAME) $(OBJECTS) main.o sqlite3.o $(ARCHIVES) $(LIBS)
-
-main.o : $(SQLITE_PATH)/sqlite3.h $(RAYLIB_PATH)/raylib.h floodfill.h linear.h bresenham.h
+main.o : sqlite3.h rlgl.h raylib.h floodfill.h linear.h
 linear.o : linear.h
 bresenham.o : bresenham.h
 floodfill.o : floodfill.h
@@ -44,35 +42,45 @@ doodad.o : symbols.h linear.h doodad.h
 symbols.o : symbols.c
 	$(CC) -c $(CFLAGS) symbols.c
 
-symbols.c : tools/symgen symbols.def
+symbols.c symbols.h &: tools/symgen symbols.def
 	tools/symgen symbols.def
 
 tools/symgen : symgen.c
 	gcc -Wall -Werror -o tools/symgen symgen.c
 
-sqlite3.o : $(SQLITE_PATH)/sqlite3.c
-	$(CC) -c -Wall $(SQLITE_PATH)/sqlite3.c
+libraylib.a : vendor/raylib
+	$(MAKE) -C vendor/raylib/src
+	cp vendor/raylib/src/libraylib.a .
 
-$(RAYLIB_PATH)/libraylib.a $(RAYLIB_PATH)/raylib.h &: vendor/$(RAYLIB_NAME)
-	$(MAKE) -C $(RAYLIB_PATH)
+raylib.h rlgl.h &: vendor/raylib
+	cp vendor/raylib/src/raylib.h .
+	cp vendor/raylib/src/rlgl.h .
 
-vendor/$(RAYLIB_NAME) :
+vendor/raylib :
 	mkdir -p vendor
 	git clone --depth=1 --branch=$(RAYLIB_VERSION) $(RAYLIB_URL) vendor/raylib
 
-$(SQLITE_PATH)/sqlite3.h $(SQLITE_PATH)/sqlite3.c &:
+vendor/sqlite3 :
 	rm -rf vendor/sqlite3
 	mkdir -p vendor/sqlite3
 	wget -P vendor/sqlite3/ $(SQLITE_URL)
 	unzip vendor/sqlite3/$(SQLITE_NAME).zip -d vendor/sqlite3/
+
+sqlite3.h sqlite3.c &: vendor/sqlite3
+	cp vendor/sqlite3/$(SQLITE_NAME)/sqlite3.c .
+	cp vendor/sqlite3/$(SQLITE_NAME)/sqlite3.h .
+
+sqlite3.o : sqlite3.c
+	$(CC) -c -Wall sqlite3.c
+
 
 clean :
 	rm -f $(EXE_NAME) main.o $(OBJECTS)
 	rm -f tools/symgen
 	rm -f symbols.c symbols.h
 
-veryclean :
-	rm -f $(EXE_NAME) main.o sqlite3.o $(OBJECTS)
-	rm -f tools/symgen
-	rm -f symbols.c symbols.h
+distclean : clean
+	rm -f raylib.h rlgl.h libraylib.a
+	rm -f sqlite3.o sqlite3.c sqlite3.h
 	rm -rf vendor/sqlite3/
+	rm -rf vendor/raylib/

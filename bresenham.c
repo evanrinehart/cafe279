@@ -3,8 +3,6 @@
 #include <math.h>
 #include <linear.h>
 
-#include <raylib.h>
-
 #define SCALE 16.0
 #define REDUCE(x) (floor((x + SCALE/2) / SCALE))
 #define SWAP(x,y) do { int temp = i; j = i; i = temp; } while(0)

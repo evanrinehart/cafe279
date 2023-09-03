@@ -1376,7 +1376,7 @@ int main(int argc, char* argv[]){
 /* LOAD WORKSPACE */
 
 	int loadStatus;
-	if((loadStatus = loadDatabase("example.save"))){
+	if((loadStatus = loadDatabase("workspace.save"))){
 		printf("load of save failed: %d\n", loadStatus);
 		exit(1);
 	}
@@ -1390,21 +1390,21 @@ int main(int argc, char* argv[]){
 	//SetTargetFPS(60);
 	InitWindow(screen_w, screen_h, "TITLE");
 
-	Texture bgtex = LoadTexture("alien-backdrop.png");
+	Texture bgtex = LoadTexture("assets/alien-backdrop.png");
 	SetTextureFilter(bgtex, TEXTURE_FILTER_BILINEAR);
 
 	//Texture tiletex = LoadTexture("blank-tile.png");
 	//SetTextureFilter(tiletex, TEXTURE_FILTER_BILINEAR);
 
-	Texture mmtex = LoadTexture("megaman.png");
+	Texture mmtex = LoadTexture("assets/megaman.png");
 	//SetTextureFilter(mmtex, TEXTURE_FILTER_TRILINEAR);
 	SetTextureWrap(mmtex, TEXTURE_WRAP_CLAMP);
 	//GenTextureMipmaps(&mmtex);
 
-	Texture statstex = LoadTexture("status-mock.png");
+	Texture statstex = LoadTexture("assets/status-mock.png");
 	SetTextureWrap(statstex, TEXTURE_WRAP_CLAMP);
 
-	tilesetTex = LoadTexture("tileset.png");
+	tilesetTex = LoadTexture("assets/tileset.png");
 	SetTextureWrap(tilesetTex, TEXTURE_WRAP_CLAMP);
 
 
@@ -1674,7 +1674,7 @@ int main(int argc, char* argv[]){
 		frameNumber++;
 	}
 
-	int dumpStatus = dumpDatabase("example.save");
+	int dumpStatus = dumpDatabase("workspace.save");
 	printf("dumpDatabase returned %d\n", dumpStatus);
 
 	CloseWindow();
