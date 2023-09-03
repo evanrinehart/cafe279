@@ -3,7 +3,10 @@
 #include <string.h>
 #include <limits.h>
 
+#include <raylib.h>
+
 #include <linear.h>
+#include <grid.h>
 #include <symbols.h>
 #include <doodad.h>
 
@@ -22,7 +25,8 @@ void deleteDoodad(struct Doodad *d){
 
 void printDoodad(struct Doodad d){
 	printf(
-		"Doodad(serial_no=%d pos=(%lf,%lf) label=\"%s\" symbol=%s)\n",
+		//"Doodad(serial_no=%d pos=(%lf,%lf) label=\"%s\" symbol=%s)\n",
+		"(%d, %lf,%lf, \"%s\", \"%s\")\n",
 		d.serial_no,
 		d.pos.x,
 		d.pos.y,
@@ -42,7 +46,20 @@ struct Doodad randomDoodad(){
 	return d;
 }
 
+
 /*
+void drawDoodad(struct Doodad *d){
+	vec2 p1 = add(d->pos, (vec2){-4, 0});
+	vec2 p2 = add(d->pos, (vec2){4,  3});
+	vec2 p3 = add(d->pos, (vec2){4, -3});
+	Vector2 q1 = worldToScreen(p1);
+	Vector2 q2 = worldToScreen(p2);
+	Vector2 q3 = worldToScreen(p3);
+	Color c = {100,200,100};
+	DrawTriangle(q1, q2, q3, c);
+}
+
+
 void main(){
 	printDoodad(randomDoodad());
 	printDoodad(randomDoodad());

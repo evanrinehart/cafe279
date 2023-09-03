@@ -1,3 +1,5 @@
+/* MAIN.C */
+
 #include <stdio.h>
 #include <math.h>
 #include <stdint.h>
@@ -18,14 +20,12 @@
 
 #include <symbols.h>
 
+#include <grid.h>
+
 #define PI2 6.283185307179586
 
 #define min(X,Y) (X < Y ? X : Y)
 #define max(X,Y) (X < Y ? Y : X)
-
-#define CELL 16.0
-#define REDUCE(x) (floor((x + CELL/2) / CELL))
-#define EXPAND(i) (16*(i))
 
 /* TYPES */
 struct placed_piece {
@@ -103,6 +103,11 @@ int room_counter = 2;
 
 
 /* GLOBALS */
+
+vec2 camera = {0,0};
+int screenW = 1920/2;
+int screenH = 1080/2;
+
 double center_x = 0;
 double center_y = 0;
 double zoom = 1;
@@ -450,13 +455,6 @@ Vector2 world_to_screen(Vector2 world_xy){
 	return (Vector2){x,y};
 }
 
-void getViewBounds(double *l, double *r, double *b, double *t){
-	*l = center_x - screen_w/2/zoom;
-	*r = center_x + screen_w/2/zoom;
-	*b = center_y - screen_h/2/zoom;
-	*t = center_y + screen_h/2/zoom;
-}
-
 void pointToTile(struct vec2 p, int *i, int *j){
 	*i = floor((p.x + 8.0) / 16.0);
 	*j = floor((p.y + 8.0) / 16.0);
@@ -466,26 +464,6 @@ void pointToTile(struct vec2 p, int *i, int *j){
 
 /* CUSTOM DRAWING */
 
-
-void drawSegment(struct vec2 a, struct vec2 b){
-	Vector2 screen_a = world_to_screen((Vector2){a.x, a.y});
-	Vector2 screen_b = world_to_screen((Vector2){b.x, b.y});
-	screen_a.x += 0.5;
-	screen_a.y += 0.5;
-	screen_b.x += 0.5;
-	screen_b.y += 0.5;
-	DrawLineEx(screen_a, screen_b, 1, MAGENTA);
-}
-
-void drawSegmentC(struct vec2 a, struct vec2 b, Color c){
-	Vector2 screen_a = world_to_screen((Vector2){a.x, a.y});
-	Vector2 screen_b = world_to_screen((Vector2){b.x, b.y});
-	screen_a.x += 0.5;
-	screen_a.y += 0.5;
-	screen_b.x += 0.5;
-	screen_b.y += 0.5;
-	DrawLineEx(screen_a, screen_b, 1, c);
-}
 
 void drawArrow(struct vec2 center, struct vec2 direction){
 	//vec2 a = sub(center, scale(8, direction));
@@ -500,22 +478,10 @@ void drawArrow(struct vec2 center, struct vec2 direction){
 	DrawLineEx(screen_a, screen_b, 1, BLACK);
 }
 
-void drawBlock(int i, int j, Color c){
-	double screen_x = world_to_screen_x(16 * i - 8);
-	double screen_y = world_to_screen_y(16 * j + 8);
-	DrawRectangle(screen_x, screen_y, 16*zoom, 16*zoom, c);
-}
-
 void drawPoint(double x, double y, Color c){
 	double screen_x = world_to_screen_x(x);
 	double screen_y = world_to_screen_y(y);
 	DrawCircle(screen_x, screen_y, 3, c);
-}
-
-void drawBall(double x, double y, double r){
-	double screen_x = world_to_screen_x(x);
-	double screen_y = world_to_screen_y(y);
-	DrawCircle(screen_x, screen_y, r*zoom, RED);
 }
 
 void draw_vertical_guideline(double x, Color c){
@@ -609,26 +575,6 @@ void drawTileEx(Texture tileset, int ix, int i, int j){
 	DrawTexturePro(tileset, source_rect, dest_rect, vzero, 0.0, WHITE);
 }
 
-void drawSprite(Texture tex, double x, double y, int flip){ // standard coords (?)
-	// standard coords, 1 = one tile over, 0 = center of grid line
-	Vector2 screen_xy = world_to_screen((Vector2){x - tex.width/2, y + tex.height/2});
-	//double screen_x = world_to_screen_x(16*x) - zoom*tex.width/2;
-	//double screen_y = world_to_screen_y(16*y) - zoom*tex.height/2;
-	//DrawTextureEx(tex, screen_xy, 0.0, zoom, WHITE);
-	//rlDisableBackfaceCulling();
-	double sign = flip ? -1 : 1;
-	DrawTexturePro(tex, (Rectangle){0,0,sign*tex.width,tex.height},(Rectangle){screen_xy.x, screen_xy.y, tex.width*zoom, tex.height*zoom}, (Vector2){0,0}, 0.0, WHITE);
-}
-
-void drawUISprite(Texture tex, double x, double y, double zoom){ // standard coords (?)
-	DrawTextureEx(tex, (Vector2){x - tex.width/2, y - tex.height/2}, 0.0, zoom, WHITE);
-}
-
-void drawLabel(const char *txt, vec2 pos){
-	double screen_x = world_to_screen_x(pos.x);
-	double screen_y = world_to_screen_y(pos.y);
-	DrawText(txt, screen_x, screen_y, zoom, BLACK);
-}
 
 
 
@@ -995,7 +941,7 @@ void renderPressureOverlay(){
 			Color c = {0,0,0,pressure/1000.0 * 255.0};
 			if(pressure > 1000.0){ c.a = 255; };
 
-			drawBlock(i-128, j-128, c);
+			drawSolidBlock(i-128, j-128, c);
 		}
 	}
 }
@@ -1416,7 +1362,7 @@ int main(int argc, char* argv[]){
 	int mmfacing = 1;
 
 	/* tile placement tool state var */
-	int newTileIx = 255;
+	//int newTileIx = 255;
 
 	/* particles state */
 	int foo = 0; // pause and unpause physics kludge
@@ -1457,7 +1403,8 @@ int main(int argc, char* argv[]){
 		}
 
 		/* * megaman * */
-		drawSprite(mmtex, mmx, 16*0.5 + mmtex.height/2.0, mmfacing < 0);
+		vec2 mm = {mmx, 16*0.5 + mmtex.height/2.0};
+		drawSprite(mmtex, mm, mmfacing < 0);
 
 
 		/* * mock status UI * */
@@ -1518,10 +1465,10 @@ int main(int argc, char* argv[]){
 		playerMove.jetpack = IsKeyDown(KEY_J) ? 1 : 0;
 
 		/* tile paint select: */
-		if(IsKeyDown(KEY_ONE))   newTileIx = 255 - 3;
-		if(IsKeyDown(KEY_TWO))   newTileIx = 255 - 2;
-		if(IsKeyDown(KEY_THREE)) newTileIx = 255 - 1;
-		if(IsKeyDown(KEY_FOUR))  newTileIx = 255 - 0;
+		//if(IsKeyDown(KEY_ONE))   newTileIx = 255 - 3;
+		//if(IsKeyDown(KEY_TWO))   newTileIx = 255 - 2;
+		//if(IsKeyDown(KEY_THREE)) newTileIx = 255 - 1;
+		//if(IsKeyDown(KEY_FOUR))  newTileIx = 255 - 0;
 		/* end tile paint */
 
 		if(IsKeyDown(KEY_UP)){
@@ -1551,6 +1498,8 @@ int main(int argc, char* argv[]){
 			Vector2 mouse_delta = GetMouseDelta();
 			center_x -= mouse_delta.x/zoom;
 			center_y -= -mouse_delta.y/zoom;
+			camera.x -= mouse_delta.x/zoom;
+			camera.y -= -mouse_delta.y/zoom;
 		}
 		/* end of pan code. */
 
@@ -1613,6 +1562,7 @@ int main(int argc, char* argv[]){
 			showRooms();
 		}
 
+/*
 		static int diff_r1 = -1;
 		static int diff_r2 = -1;
 		if(IsKeyPressed(KEY_Y)){
@@ -1637,6 +1587,7 @@ int main(int argc, char* argv[]){
 				}
 			}
 		}
+*/
 
 		if(IsKeyDown(KEY_U)){
 			//db_rooms[diff_r1].air += 1;
@@ -1674,8 +1625,8 @@ int main(int argc, char* argv[]){
 		frameNumber++;
 	}
 
-	int dumpStatus = dumpDatabase("workspace.save");
-	printf("dumpDatabase returned %d\n", dumpStatus);
+	//int dumpStatus = dumpDatabase("workspace.save");
+	//printf("dumpDatabase returned %d\n", dumpStatus);
 
 	CloseWindow();
 

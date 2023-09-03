@@ -27,16 +27,19 @@ OBJECTS = \
 	floodfill.o \
 	bresenham.o \
 	symbols.o \
+	grid.o \
 	doodad.o
 
 $(EXE_NAME) : $(OBJECTS) main.o sqlite3.o libraylib.a
 	gcc -o $(EXE_NAME) $(OBJECTS) main.o sqlite3.o libraylib.a $(LIBS)
 
-main.o : sqlite3.h rlgl.h raylib.h floodfill.h linear.h
+# implicit rules and compile action for .c files used here
+main.o : sqlite3.h rlgl.h raylib.h floodfill.h linear.h grid.h
 linear.o : linear.h
 bresenham.o : bresenham.h
 floodfill.o : floodfill.h
-doodad.o : symbols.h linear.h doodad.h
+doodad.o : raylib.h symbols.h linear.h doodad.h
+grid.o : grid.h raylib.h linear.h
 
 
 symbols.o : symbols.c
