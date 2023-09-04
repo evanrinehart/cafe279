@@ -8,6 +8,7 @@
 #include <linear.h>
 #include <grid.h>
 #include <symbols.h>
+
 #include <doodad.h>
 
 #define MAX_DOODADS 1024
@@ -15,18 +16,18 @@ struct Doodad doodads[MAX_DOODADS];
 struct Doodad *doodad_ptr = doodads;
 struct Doodad *doodad_ptr_end = doodads + MAX_DOODADS;
 
-void addDoodad(struct Doodad d){
-	*doodad_ptr++ = d;
+void addDoodad(struct Doodad *d){
+	if(doodad_ptr < doodad_ptr_end) *doodad_ptr++ = *d;
 }
 
 void deleteDoodad(struct Doodad *d){
-	*d = *--doodad_ptr;
+	if(doodad_ptr > doodads) *d = *--doodad_ptr;
 }
 
 void printDoodad(struct Doodad d){
 	printf(
-		//"Doodad(serial_no=%d pos=(%lf,%lf) label=\"%s\" symbol=%s)\n",
-		"(%d, %lf,%lf, \"%s\", \"%s\")\n",
+		"Doodad(serial_no=%d pos=(%lf,%lf) label=\"%s\" symbol=%s)\n",
+		//"(%d, %lf,%lf, \"%s\", \"%s\")\n",
 		d.serial_no,
 		d.pos.x,
 		d.pos.y,
@@ -47,19 +48,15 @@ struct Doodad randomDoodad(){
 }
 
 
-/*
-void drawDoodad(struct Doodad *d){
-	vec2 p1 = add(d->pos, (vec2){-4, 0});
-	vec2 p2 = add(d->pos, (vec2){4,  3});
-	vec2 p3 = add(d->pos, (vec2){4, -3});
-	Vector2 q1 = worldToScreen(p1);
-	Vector2 q2 = worldToScreen(p2);
-	Vector2 q3 = worldToScreen(p3);
-	Color c = {100,200,100};
-	DrawTriangle(q1, q2, q3, c);
+void clickDoodad(struct Doodad *d){
+	int L = strlen(d->label); if(L == 0) return;
+	int c = d->label[0];
+	for(int i=0; i < L; i++){ d->label[i] = d->label[i+1]; }
+	d->label[L-1] = c;
 }
 
 
+/*
 void main(){
 	printDoodad(randomDoodad());
 	printDoodad(randomDoodad());

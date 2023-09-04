@@ -5,7 +5,7 @@ struct Doodad {
 	enum Symbol symbol;
 };
 
-void addDoodad(struct Doodad d);
+void addDoodad(struct Doodad *d);
 void deleteDoodad(struct Doodad *d);
 void printDoodad(struct Doodad d);
 struct Doodad randomDoodad();

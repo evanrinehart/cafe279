@@ -8,6 +8,14 @@
 #define max(a,b) (a < b ? b : a)
 #define aabbOverlap(a,b) (!aabbApart(a,b))
 
+int vec2eq(vec2 a, vec2 b){
+	return a.x == b.x && a.y == b.y;
+}
+
+int vec2neq(vec2 a, vec2 b){
+	return a.x != b.x || a.y != b.y;
+}
+
 struct vec2 add(struct vec2 a, struct vec2 b){
 	return (struct vec2){a.x + b.x, a.y + b.y};
 }

@@ -13,6 +13,11 @@ struct vec2 {
 
 typedef struct vec2 vec2;
 
+#define vec2(X,Y) ((vec2){X,Y})
+
+int vec2eq(vec2 a, vec2 b);
+int vec2neq(vec2 a, vec2 b);
+
 struct vec2 add(struct vec2 a, struct vec2 b);
 struct vec2 sub(struct vec2 a, struct vec2 b);
 struct vec2 neg(struct vec2 a);

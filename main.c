@@ -20,7 +20,9 @@
 
 #include <symbols.h>
 
-#include <grid.h>
+#include <doodad.h>
+
+#include <renderer.h>
 
 #define PI2 6.283185307179586
 
@@ -104,13 +106,13 @@ int room_counter = 2;
 
 /* GLOBALS */
 
-vec2 camera = {0,0};
-int screenW = 1920/2;
-int screenH = 1080/2;
+extern vec2 camera;
+extern int screenW;
+extern int screenH;
+extern double zoom;
 
 double center_x = 0;
 double center_y = 0;
-double zoom = 1;
 int screen_w = 1920/2;
 int screen_h = 1080/2;
 int frameNumber = 0;
@@ -911,7 +913,7 @@ void renderRoomOverlay(){
 
 			int dat = chunk.room[i][j];
 			//int p = paper[i][j];
-			drawLabel(TextFormat("%d", dat), (vec2){x-4,y+4});
+			drawLabel((vec2){x-4,y+4}, TextFormat("%d", dat));
 			//drawLabel(TextFormat("%d", p), (vec2){x+2,y-2});
 		}
 	}
@@ -1317,7 +1319,31 @@ printf("expanding 1 room from multiple directions\n");
 
 
 
+
 int main(int argc, char* argv[]){
+
+	// load configuration
+
+	// initialize raylib, get window
+
+	// load assets
+
+	// initialize components
+
+	// main loop
+
+	//   render everything
+
+	//   gather input and dispatch input
+
+	//   run physics on everything
+
+	//   if window should close break out
+
+	// unload everything
+
+
+
 
 /* LOAD WORKSPACE */
 
@@ -1331,6 +1357,10 @@ int main(int argc, char* argv[]){
 
 /* SETUP RAYLIB */
 
+	initializeWindow(1920 / 2, 1080 / 2, "GAME");
+	loadAssets();
+
+/*
 	SetConfigFlags(FLAG_MSAA_4X_HINT);
 	SetConfigFlags(FLAG_VSYNC_HINT);
 	//SetTargetFPS(60);
@@ -1352,6 +1382,7 @@ int main(int argc, char* argv[]){
 
 	tilesetTex = LoadTexture("assets/tileset.png");
 	SetTextureWrap(tilesetTex, TEXTURE_WRAP_CLAMP);
+*/
 
 
 
@@ -1374,9 +1405,22 @@ int main(int argc, char* argv[]){
 	//fillOutRooms();
 	initializeRooms();
 
+	//for(;;){
 
+	//	renderAll();
+	//  dispatchEvents();
+	//  runPhysics();
+
+	//  if(WindowShouldClose()) break;
+	//  frameNumber++;
+
+	//}
+
+	int tick = 0;
 
 	for(;;){ // ... main loop
+
+		dispatchInput();
 
 /* DRAWING */
 
@@ -1403,12 +1447,13 @@ int main(int argc, char* argv[]){
 		}
 
 		/* * megaman * */
-		vec2 mm = {mmx, 16*0.5 + mmtex.height/2.0};
-		drawSprite(mmtex, mm, mmfacing < 0);
+		int megamansHeight = 24;
+		vec2 mm = {mmx, 16*0.5 + 1.0*megamansHeight/2.0};
+		drawMegaman(mm, mmfacing < 0);
 
 
 		/* * mock status UI * */
-		drawUISprite(statstex, db_config.stats_pos_x, screen_h - db_config.stats_pos_y, 2.0);
+		//drawUISprite(statstex, db_config.stats_pos_x, screen_h - db_config.stats_pos_y, 2.0);
 
 		/* * debug text * */
 		DrawFPS(0,0);

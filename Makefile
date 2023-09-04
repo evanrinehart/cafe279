@@ -1,13 +1,3 @@
-EXE_NAME = game
-
-RAYLIB_VERSION = 4.5.0
-RAYLIB_PATH = vendor/raylib/src
-RAYLIB_URL = https://github.com/raysan5/raylib.git
-
-SQLITE_NAME = sqlite-amalgamation-3430000
-SQLITE_PATH = vendor/sqlite3/$(SQLITE_NAME)
-SQLITE_URL = https://www.sqlite.org/2023/$(SQLITE_NAME).zip
-
 CC = gcc
 
 CFLAGS = \
@@ -27,29 +17,36 @@ OBJECTS = \
 	floodfill.o \
 	bresenham.o \
 	symbols.o \
-	grid.o \
+	renderer.o \
 	doodad.o
 
+EXE_NAME = game
 $(EXE_NAME) : $(OBJECTS) main.o sqlite3.o libraylib.a
 	gcc -o $(EXE_NAME) $(OBJECTS) main.o sqlite3.o libraylib.a $(LIBS)
 
 # implicit rules and compile action for .c files used here
-main.o : sqlite3.h rlgl.h raylib.h floodfill.h linear.h grid.h
+main.o : renderer.h sqlite3.h rlgl.h raylib.h floodfill.h linear.h
 linear.o : linear.h
 bresenham.o : bresenham.h
 floodfill.o : floodfill.h
 doodad.o : raylib.h symbols.h linear.h doodad.h
-grid.o : grid.h raylib.h linear.h
+renderer.o : raylib.h renderer.h linear.h
+symbols.o : symbols.h
 
-
-symbols.o : symbols.c
-	$(CC) -c $(CFLAGS) symbols.c
-
+# symbols.c,h are generated from a text file
 symbols.c symbols.h &: tools/symgen symbols.def
 	tools/symgen symbols.def
 
 tools/symgen : symgen.c
 	gcc -Wall -Werror -o tools/symgen symgen.c
+
+RAYLIB_VERSION = master
+RAYLIB_PATH = vendor/raylib/src
+RAYLIB_URL = https://github.com/raysan5/raylib.git
+
+vendor/raylib :
+	mkdir -p vendor
+	git clone --depth=1 --branch=$(RAYLIB_VERSION) $(RAYLIB_URL) vendor/raylib
 
 libraylib.a : vendor/raylib
 	$(MAKE) -C vendor/raylib/src
@@ -59,9 +56,9 @@ raylib.h rlgl.h &: vendor/raylib
 	cp vendor/raylib/src/raylib.h .
 	cp vendor/raylib/src/rlgl.h .
 
-vendor/raylib :
-	mkdir -p vendor
-	git clone --depth=1 --branch=$(RAYLIB_VERSION) $(RAYLIB_URL) vendor/raylib
+SQLITE_NAME = sqlite-amalgamation-3430000
+SQLITE_PATH = vendor/sqlite3/$(SQLITE_NAME)
+SQLITE_URL = https://www.sqlite.org/2023/$(SQLITE_NAME).zip
 
 vendor/sqlite3 :
 	rm -rf vendor/sqlite3
