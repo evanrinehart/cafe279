@@ -63,28 +63,3 @@ struct Doodad * findDoodad(vec2 mouse){
 	}
 	return NULL;
 }
-	
-
-
-/*
-void main(){
-	printDoodad(randomDoodad());
-	printDoodad(randomDoodad());
-	printDoodad(randomDoodad());
-	printDoodad(randomDoodad());
-
-	addDoodad(randomDoodad());
-	addDoodad(randomDoodad());
-	addDoodad(randomDoodad());
-	addDoodad(randomDoodad());
-
-	for(struct Doodad *ptr = doodads; ptr < doodad_ptr; ptr++){
-		printDoodad(*ptr);
-	}
-
-	for(struct Doodad *ptr = doodads; ptr < doodad_ptr; ptr++){
-		printDoodad(*ptr);
-	}
-}
-
-*/

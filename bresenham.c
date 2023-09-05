@@ -1,6 +1,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <math.h>
+
 #include <linear.h>
 
 #define SCALE 16.0
@@ -13,19 +14,6 @@ enum bgstatus_t {
 	MAINLOOP,
 	DONE
 };
-
-/* algorithm states, all together
-- in a column waiting to output current cell.
-- that's always what state its in. So how do you move between states.
-
-- first, output the current cell.
-- then three things may happens:
-	- stay in column and move up
-	- no more cells in this column, and it's the last column
-	- no more cells in this column, move to next column
-- moving to the next column updates the Y intercepts, which requires a delta X
-- delta X is different for the last column
-*/
 
 static int status;
 
@@ -46,11 +34,6 @@ static int istep;
 static double xstep;
 static double last_mile;
 
-//static int ultimateKludge = 0;
-//static double bx;
-//static double by;
-
-
 void setupSlopeUnderOne(vec2 a, vec2 b, double slope){
 	i = REDUCE(a.x);
 	j = REDUCE(a.y);
@@ -65,15 +48,11 @@ void setupSlopeUnderOne(vec2 a, vec2 b, double slope){
 
 	double lastgrid = lasti*SCALE - (west ? 8 : -8);
 	last_mile = b.x - lastgrid; /* negative when going left */
-	//printf("b.x=%lf lastgrid=%lf last_mile=%lf\n", b.x, lastgrid, last_mile);
 
 	x = i*SCALE + (west ? 8.0 : -8.0);
 	y = a.y + (x - a.x) * slope;
 	waterline = j*SCALE + (elevating ? 8.0 : -8.0);
 	more_columns = abs(lasti - i);
-
-
-	// on every step but the last, x increments by SCALE or -SCALE
 }
 
 int checkFast(vec2 a, vec2 b){
@@ -117,17 +96,11 @@ void enumerateCoveredCells(vec2 a, vec2 b){
 }
 
 
-//void draw_vertical_guideline(double x, Color c);
-//void draw_horizontal_guideline(double y, Color c);
-
 // return the next cell of a traversal in i j, or 0 if no more cells
 int nextCoveredCell(int *iout, int *jout){
 
-	//draw_horizontal_guideline(y, BLUE);
-
 	switch(status){
 		case FASTPATH: 
-			//printf("FASTPATH\n");
 			*iout = i;
 			*jout = j;
 			status = DONE;
@@ -144,8 +117,6 @@ int nextCoveredCell(int *iout, int *jout){
 				*iout = i;
 				*jout = j;
 			}
-
-			//printf("y=%lf waterline=%lf\n", y, waterline);
 
 			if(elevating){
 
@@ -204,5 +175,3 @@ int nextCoveredCell(int *iout, int *jout){
 			CRASH("nextCell bad status");
 	}
 }
-
-

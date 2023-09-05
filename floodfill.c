@@ -64,30 +64,3 @@ int flood(int i, int j, char horiz[FFSIZE][FFSIZE], char vert[FFSIZE][FFSIZE], v
 
 	return status;
 }
-
-
-
-/*
-void main(){
-
-	char vert[FFSIZE][FFSIZE];
-	char horiz[FFSIZE][FFSIZE];
-
-	for(int j = 1; j < 7; j++){
-		vert[1][j] = 1;
-		vert[6][j] = 1;
-	}
-	for(int i = 1; i < 7; i++){
-		horiz[i][1] = 1;
-		horiz[i][6] = 1;
-	}
-
-	//flood(4,4,horiz,vert,NULL,testvisit);
-	printf("volume = %d\n", measureVolume(255, 255, horiz, vert));
-	puts("");
-	//flood(3,2,horiz,vert,NULL,testvisit);
-	printf("volume = %d\n", measureVolume(3, 2, horiz, vert));
-	puts("");
-
-}
-*/
