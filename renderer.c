@@ -1,10 +1,11 @@
 /*
 	renderer
 
-	it uses raylib to do graphics. it knows the structure of models.
-	other components can call to the renderer for reasons.
+	It uses raylib to do graphics. It knows the structure of models.
 
-	it also contains the camera transform and screen dimensions stuff.
+	It also sources and dispatches user input for effects on the game.
+
+	It also contains the camera transform and screen dimensions stuff.
 */	
 
 #include <stdio.h>
@@ -40,6 +41,8 @@ void drawLabel(vec2 p, const char *txt);
 void drawBall(vec2 p, double r, Color c);
 void drawSprite(Texture tex, vec2 p, int flip);
 void drawUISprite(Texture tex, double x, double y, double zoom);
+
+void drawSpriteBase(Texture tex, vec2 p, int flip);
 
 void drawMegaman(vec2 p, int flip);
 
@@ -105,17 +108,9 @@ int windowShouldClose(){
 
 int loadAssets(){
 
-	//bgtex = LoadTexture("assets/alien-backdrop.png");
-	//SetTextureFilter(bgtex, TEXTURE_FILTER_BILINEAR);
-
-	//Texture tiletex = LoadTexture("blank-tile.png");
-	//SetTextureFilter(tiletex, TEXTURE_FILTER_BILINEAR);
-
 	mmtex = LoadTexture("assets/megaman.png");
-	//SetTextureFilter(mmtex, TEXTURE_FILTER_TRILINEAR);
 	SetTextureWrap(mmtex, TEXTURE_WRAP_CLAMP);
 	megaman.height = mmtex.height;
-	//GenTextureMipmaps(&mmtex);
 
 	statstex = LoadTexture("assets/status-mock.png");
 	SetTextureWrap(statstex, TEXTURE_WRAP_CLAMP);
@@ -235,6 +230,17 @@ void drawSprite(Texture tex, vec2 p, int flip){
 	double sign = flip ? -1 : 1;
 
 	Rectangle src = {0, 0, sign*tex.width, tex.height};
+	Rectangle dst = {scorner.x, scorner.y, tex.width*zoom, tex.height*zoom};
+	Vector2 zero = {0,0};
+
+	DrawTexturePro(tex, src, dst, zero, 0.0, WHITE);
+}
+
+void drawSpriteBase(Texture tex, vec2 p, int flip){
+	vec2 wcorner = {p.x - tex.width/2, p.y + tex.height};
+	Vector2 scorner = worldToScreen(wcorner);
+
+	Rectangle src = {0, 0, tex.width, tex.height};
 	Rectangle dst = {scorner.x, scorner.y, tex.width*zoom, tex.height*zoom};
 	Vector2 zero = {0,0};
 
@@ -599,7 +605,7 @@ void drawDoodad(struct Doodad *d){
 }
 
 void drawMegaman(vec2 p, int flip){
-	drawSprite(mmtex, p, flip);
+	drawSpriteBase(mmtex, p, flip);
 }
 
 void rerenderEverything(){
@@ -629,8 +635,7 @@ void rerenderEverything(){
 	//}
 
 	/* * megaman * */ //???
-	vec2 mm = {megaman.x, 16*0.5 + 1.0*megaman.height/2.0};
-	drawMegaman(mm, megaman.facing < 0);
+	drawMegaman(vec2(megaman.x, 8), megaman.facing < 0);
 
 	/* * mock status UI * */
 	//drawUISprite(statstex, db_config.stats_pos_x, screen_h - db_config.stats_pos_y, 2.0);

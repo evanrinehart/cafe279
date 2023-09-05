@@ -33,7 +33,7 @@ void printDoodad(struct Doodad *d){
 }
 
 struct Doodad randomDoodad(){
-	char names[][64] = {"HELLO", "WORLD", "SORTED", "SYNTAX", "VALUE", "SPACE", "COLD", "ACCOUNT"};
+	char names[][64] = {"HELLO", "WORLD", "SORTED", "ELEMENT", "VALUE", "SPACE", "COLD", "ACCOUNT"};
 	struct Doodad d;
 	d.serial_no = rand() % 1000;
 	d.pos.x = 16 * 10 * ((1.0 * rand() / INT_MAX) - 0.5);
