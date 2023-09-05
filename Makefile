@@ -80,11 +80,12 @@ sqlite3.o : sqlite3.c
 
 clean :
 	rm -f $(EXE_NAME) main.o $(OBJECTS)
+	rm -f raylib.h rlgl.h libraylib.a
 	rm -f tools/symgen
 	rm -f symbols.c symbols.h
 
 distclean : clean
-	rm -f raylib.h rlgl.h libraylib.a
-	rm -f sqlite3.o sqlite3.c sqlite3.h
+	rm -f sqlite3.c sqlite3.h
+	rm -f sqlite3.o
 	rm -rf vendor/sqlite3/
 	rm -rf vendor/raylib/
