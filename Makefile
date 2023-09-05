@@ -1,4 +1,5 @@
 CC = gcc
+DC = gdc
 
 CFLAGS = \
 	-g \
@@ -36,6 +37,11 @@ symbols.o : symbols.h
 linear.o : linear.h
 bresenham.o : bresenham.h
 floodfill.o : floodfill.h
+
+
+# define a custom pattern rule to compile D files in the same way C files are
+%.o : %.d ; $(DC) -fno-druntime -c $<
+
 
 # symbols.c,h are generated from a text file
 symbols.c symbols.h &: tools/symgen symbols.def
