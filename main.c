@@ -1,20 +1,17 @@
 /* MAIN.C */
 
 #include <stdlib.h>
-
-#include <engine.h>
-
-// components
 #include <renderer.h>
 #include <loader.h>
+#include <engine.h>
 
+struct Engine engine;
 
-
-/* GLOBALS */
-
-struct Engine engine = { .frameNumber = 0LL };
+#define WORKSPACE "workspace.save"
 
 int main(int argc, char* argv[]){
+
+	engine.frameNumber = 0;
 
 	int width  = 1920 / 2;
 	int height = 1080 / 2;
@@ -24,7 +21,7 @@ int main(int argc, char* argv[]){
 	status = loadConfig("config.db");                 if(status < 0){ exit(1); }
 	status = initializeWindow(width, height, "GAME"); if(status < 0){ exit(1); }
 	status = loadAssets();                            if(status < 0){ exit(1); }
-	status = loadWorkspace("workspace.save");         if(status < 0){ exit(1); }
+	status = loadWorkspace(WORKSPACE);                if(status < 0){ exit(1); }
 
 	initializeEverything();
 
@@ -36,8 +33,7 @@ int main(int argc, char* argv[]){
 		engine.frameNumber++;
 	}
 
-	//int dumpStatus = dumpDatabase("workspace.save");
-	//printf("dumpDatabase returned %d\n", dumpStatus);
+	saveWorkspace(WORKSPACE);
 
 	shutdownEverything();
 

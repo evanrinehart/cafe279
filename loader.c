@@ -416,3 +416,10 @@ int loadWorkspace(const char* savename){
 	}
 	return 0;
 }
+
+
+
+int saveWorkspace(const char* filename){
+	// TODO
+	return 0;
+}

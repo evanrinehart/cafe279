@@ -28,7 +28,7 @@ $(EXE_NAME) : $(OBJECTS) main.o sqlite3.o libraylib.a
 
 # implicit rules and compile action for .c files used here
 main.o : engine.h renderer.h loader.h
-renderer.o : renderer.h linear.h megaman.h chunk.h engine.h doodad.h raylib.h
+renderer.o : raylib.h renderer.h symbols.h linear.h doodad.h chunk.h megaman.h
 loader.o : loader.h symbols.h linear.h sqlite3.h
 doodad.o : doodad.h symbols.h linear.h
 chunk.o : chunk.h floodfill.h
