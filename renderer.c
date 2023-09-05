@@ -22,6 +22,10 @@
 
 #include <renderer.h>
 
+#define CELL 16.0 // the size of a cell in pixels
+#define REDUCE(x) (floor(((x) + CELL/2) / CELL)) // cell index for world coordinate
+#define EXPAND(i) (CELL*(i)) // world coordinate for center of cell at index
+
 vec2 screenToWorld(double screenX, double screenY);
 void getViewBounds(double *l, double *r, double *b, double *t);
 void drawVerticalRule(double worldX, Color c);
