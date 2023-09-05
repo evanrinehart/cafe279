@@ -17,39 +17,13 @@ typedef struct Color {
 #define REDUCE(x) (floor(((x) + CELL/2) / CELL)) // cell index for world coordinate
 #define EXPAND(i) (CELL*(i)) // world coordinate for center of cell at index
 
-void initializeWindow(int w, int h, const char* title);
-void loadAssets();
+int initializeWindow(int w, int h, const char* title);
+int loadAssets();
 
-vec2 screenToWorld(double screenX, double screenY);
-void getViewBounds(double *l, double *r, double *b, double *t);
-void drawVerticalRule(double worldX, Color c);
-void drawHorizontalRule(double worldY, Color c);
-void drawGridVerticals(double spacing, double offset, Color color);
-void drawGridHorizontals(double spacing, double offset, Color color);
-void drawGrid(double spacing, double offset, Color color);
-void drawSegmentC(vec2 a, vec2 b, Color c);
-void drawSegment(vec2 a, vec2 b);
-void drawSolidBlock(int i, int j, Color c);
-void drawLabel(vec2 p, const char *txt);
-void drawBall(vec2 p, double r, Color c);
-void drawSprite(Texture tex, vec2 p, int flip);
-void drawUISprite(Texture tex, double x, double y, double zoom);
-
-void drawDoodad(struct Doodad *d);
-void drawMegaman(vec2 p, int flip);
+void initializeEverything();
 
 void dispatchInput();
+void rerenderEverything();
 
-// global structs to be read-only by other modules
-extern struct Screen {
-	int w;
-	int h;
-	vec2 mouse;
-} screen;
-
-extern struct World {
-	vec2 mouse;
-} world;
-
-
-
+int windowShouldClose();
+void shutdownEverything();

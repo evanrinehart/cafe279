@@ -9,27 +9,67 @@
 
 #include <stdio.h>
 #include <math.h>
+
 #include <raylib.h>
+
 #include <linear.h>
 #include <symbols.h>
 
 #include <doodad.h>
+#include <megaman.h>
+#include <chunk.h>
+#include <engine.h>
 
 #include <renderer.h>
+
+vec2 screenToWorld(double screenX, double screenY);
+void getViewBounds(double *l, double *r, double *b, double *t);
+void drawVerticalRule(double worldX, Color c);
+void drawHorizontalRule(double worldY, Color c);
+void drawGridVerticals(double spacing, double offset, Color color);
+void drawGridHorizontals(double spacing, double offset, Color color);
+void drawGrid(double spacing, double offset, Color color);
+void drawSegmentC(vec2 a, vec2 b, Color c);
+void drawSegment(vec2 a, vec2 b);
+void drawSolidBlock(int i, int j, Color c);
+void drawLabel(vec2 p, const char *txt);
+void drawBall(vec2 p, double r, Color c);
+void drawSprite(Texture tex, vec2 p, int flip);
+void drawUISprite(Texture tex, double x, double y, double zoom);
+
+void drawMegaman(vec2 p, int flip);
+
+
+extern struct Screen {
+	int w;
+	int h;
+	vec2 mouse;
+} screen;
+
+extern struct World {
+	vec2 mouse;
+} world;
+
 
 vec2 camera = {0,0};
 double zoom = 1;
 int screenW = 1920/2;
 int screenH = 1080/2;
 
+enum Symbol overlayMode;
+
+int mouse_buttons[10];
+
 struct Screen screen;
 struct World world;
 
+struct Megaman megaman;
 
 //static Texture bgtex;
 static Texture mmtex;
 static Texture statstex;
 static Texture tilesetTex;
+
 
 vec2 updateMouse(){
 	Vector2 m = GetMousePosition();
@@ -39,7 +79,7 @@ vec2 updateMouse(){
 }
 
 
-void initializeWindow(int w, int h, const char* title){
+int initializeWindow(int w, int h, const char* title){
 
 	screen.w = w;
 	screen.h = h;
@@ -52,9 +92,15 @@ void initializeWindow(int w, int h, const char* title){
 
 	updateMouse();
 
+	return 0;
 }
 
-void loadAssets(){
+int windowShouldClose(){
+	return WindowShouldClose();
+}
+
+int loadAssets(){
+
 	//bgtex = LoadTexture("assets/alien-backdrop.png");
 	//SetTextureFilter(bgtex, TEXTURE_FILTER_BILINEAR);
 
@@ -64,6 +110,7 @@ void loadAssets(){
 	mmtex = LoadTexture("assets/megaman.png");
 	//SetTextureFilter(mmtex, TEXTURE_FILTER_TRILINEAR);
 	SetTextureWrap(mmtex, TEXTURE_WRAP_CLAMP);
+	megaman.height = mmtex.height;
 	//GenTextureMipmaps(&mmtex);
 
 	statstex = LoadTexture("assets/status-mock.png");
@@ -71,7 +118,10 @@ void loadAssets(){
 
 	tilesetTex = LoadTexture("assets/tileset.png");
 	SetTextureWrap(tilesetTex, TEXTURE_WRAP_CLAMP);
+
+	return 0;
 }
+
 
 Vector2 worldToScreen(vec2 p){
 	double x = floor( zoom * p.x + screenW/2 - zoom * camera.x);
@@ -195,6 +245,336 @@ void drawUISprite(Texture tex, double x, double y, double zoom){
 
 
 
+/* Controller */
+
+void initializeEverything(){
+	initializeRooms();
+}
+
+// raw action routines... master controller
+
+void mouseMotion(vec2 mouse, vec2 delta){
+	// mouse_diff might be large for reasons, don't assume it's small
+	int x = mouse.x;
+	int y = mouse.y;
+	int dx = delta.x;
+	int dy = delta.y;
+	printf("mouse motion by %d %d to %d %d\n", dx, dy, x, y);
+
+
+
+
+	/* pan service code: */
+	if(mouse_buttons[2]){
+		camera.x -=  delta.x/zoom;
+		camera.y -= -delta.y/zoom;
+	}
+	/* end of pan code. */
+}
+
+void leftClick(vec2 p, int down){
+	mouse_buttons[0] = down;
+
+	vec2 q = screenToWorld(p.x, p.y);
+	if(down){
+		struct Doodad * d = findDoodad(q);
+		if(d){ clickDoodad(d); }
+	}
+	//printf("mouse left click %d at %lf %lf\n", down, p.x, p.y);
+}
+
+void rightClick(vec2 p, int down){
+	mouse_buttons[1] = down;
+
+	printf("mouse right click %d\n", down);
+}
+
+void middleClick(vec2 p, int down){
+	mouse_buttons[2] = down;
+
+	printf("mouse middle click %d\n", down);
+}
+
+void mouseWheel(vec2 p, double diff){
+	if(diff < 0) zoom /= 2;
+	if(diff > 0) zoom *= 2;
+}
+
+void inputCharacter(int c){
+	printf("input character %c\n", c);
+}
+
+void pressG(){
+	printf("pressed G (%d)\n", KEY_G);
+}
+
+void pressKeypad(int n){
+	if(n==0) overlayMode = 0;
+	if(n==1) overlayMode = ATMOSPHERIC_EDGE_OVERLAY;
+	if(n==2) overlayMode = ROOM_BOUNDARY_OVERLAY;
+}
+
+
+// source event from raylib
+
+void dispatchInput(){
+	// mouse
+	vec2 mouse_prev = screen.mouse;
+	vec2 mouse_new = updateMouse();
+
+	if(vec2neq(mouse_new, mouse_prev)){
+		vec2 mouse_diff = sub(mouse_new, mouse_prev);
+		mouseMotion(mouse_new, mouse_diff);
+	}
+
+	vec2 mouse = mouse_new;
+
+	if(IsMouseButtonPressed(0)){ leftClick(mouse, 1); }
+	if(IsMouseButtonReleased(0)){ leftClick(mouse, 0); }
+	if(IsMouseButtonPressed(1)){ rightClick(mouse, 1); }
+	if(IsMouseButtonReleased(1)){ rightClick(mouse, 0); }
+	if(IsMouseButtonPressed(2)){ middleClick(mouse, 1); }
+	if(IsMouseButtonReleased(2)){ middleClick(mouse, 0); }
+
+	double amount = GetMouseWheelMove();
+	if(amount < 0 || 0 < amount){ mouseWheel(mouse, amount); }
+
+
+	// keyboard
+	if(IsKeyPressed(KEY_LEFT_CONTROL)){
+		pressG();
+	}
+
+	int c = 0;
+	while((c = GetCharPressed())){
+		inputCharacter(c);
+	}
+
+	if(IsKeyPressed(KEY_KP_0)){ pressKeypad(0); }
+	if(IsKeyPressed(KEY_KP_1)){ pressKeypad(1); }
+	if(IsKeyPressed(KEY_KP_2)){ pressKeypad(2); }
+	if(IsKeyPressed(KEY_KP_3)){ pressKeypad(3); }
+	if(IsKeyPressed(KEY_KP_4)){ pressKeypad(4); }
+	if(IsKeyPressed(KEY_KP_5)){ pressKeypad(5); }
+	if(IsKeyPressed(KEY_KP_6)){ pressKeypad(6); }
+	if(IsKeyPressed(KEY_KP_7)){ pressKeypad(7); }
+	if(IsKeyPressed(KEY_KP_8)){ pressKeypad(8); }
+	if(IsKeyPressed(KEY_KP_9)){ pressKeypad(9); }
+
+/*
+		if(IsKeyDown(KEY_UP)){
+			struct vec2 xy = screen_to_world(GetMousePosition());
+			int i, j;
+			pointToTile(xy, &i, &j);
+			int r = chunk.room[i+128][j+128];
+			db_rooms[r].air += 50;
+			printf("pump it up! %d\n", db_rooms[r].air);
+		}
+
+		if(IsKeyDown(KEY_DOWN)){
+			struct vec2 xy = screen_to_world(GetMousePosition());
+			int i, j;
+			pointToTile(xy, &i, &j);
+			int r = chunk.room[i+128][j+128];
+			for(int c = 0; c < 50; c++){
+				if(db_rooms[r].air > 0){
+					db_rooms[r].air -= 1;
+					printf("deflating! %d\n", db_rooms[r].air);
+				}
+			}
+		}
+
+		if(0 && IsMouseButtonPressed(0)){
+			struct vec2 xy = screen_to_world(GetMousePosition());
+			int i, j;
+			pointToTile(xy, &i, &j);
+			printf("%d %d\n", i + 128, j + 128);
+			//if(tileAt(i,j)) deleteTileAt(i, j);
+			if(!tileAt(i,j)){
+				//newBlock(i+128, j+128, newTileIx);
+				addBlock(i+128, j+128);
+			}
+			
+		}
+
+		if(0 && IsMouseButtonPressed(1)){
+			struct vec2 xy = screen_to_world(GetMousePosition());
+			int i, j;
+			pointToTile(xy, &i, &j);
+
+			if(tileAt(i,j)){
+				deleteBlock(i+128, j+128);
+			}
+		}
+
+		if(IsKeyPressed(KEY_V)){
+			struct vec2 xy = screen_to_world(GetMousePosition());
+			int i, j;
+			pointToTile(xy, &i, &j);
+
+			int v = measureVolume(i+128, j+128);
+			printf("volume = %d\n", v);
+		}
+
+		if(IsKeyPressed(KEY_O)){
+			struct vec2 xy = screen_to_world(GetMousePosition());
+			int i, j;
+			pointToTile(xy, &i, &j);
+
+			int o = isOutside(i+128, j+128);
+			printf("is outside: %d\n", o);
+		}
+
+*/
+
+
+}
+
+
+
+/* Renderer */
+
+Rectangle tileIndexToRect(int i){
+	int row = i / 16;
+	int col = i % 16;
+	return (Rectangle){col*16, row*16, 16, 16};
+} 
+
+void drawTile(int tile, int i, int j){
+	
+	vec2 center = {16*i, 16*j};
+	double dest_w = zoom*16;
+	double dest_h = zoom*16;
+	Vector2 corner = worldToScreen(center);
+	corner.x -= dest_w / 2;
+	corner.y -= dest_h / 2;
+	Rectangle sourceRect = tileIndexToRect(tile);
+	Rectangle destRect = (Rectangle){corner.x, corner.y, dest_w, dest_h};
+	Vector2 vzero = (Vector2){0,0};
+	DrawTexturePro(tilesetTex, sourceRect, destRect, vzero, 0.0, WHITE);
+
+}
+
+void renderTiles(){
+	double xmin, xmax, ymin, ymax;
+
+	getViewBounds(&xmin, &xmax, &ymin, &ymax);
+	
+	for(int i = 0; i < 256; i++){
+		for(int j = 0; j < 256; j++){
+			double x = EXPAND(i - 128);
+			double y = EXPAND(j - 128);
+
+			if(x < xmin - 16) continue;
+			if(x > xmax + 16) continue;
+			if(y < ymin - 16) continue;
+			if(y > ymax + 16) continue;
+
+			int tile = chunk.block[i][j];
+
+			if(tile == 0) continue;
+
+			drawTile(tile, i - 128, j -128);
+		}
+	}
+}
+
+
+void renderEdgeOverlay(enum Symbol mode){
+	double xmin, xmax, ymin, ymax;
+
+	getViewBounds(&xmin, &xmax, &ymin, &ymax);
+	
+	for(int i = 0; i < 256; i++){
+		for(int j = 0; j < 256; j++){
+			double x = EXPAND(i - 128);
+			double y = EXPAND(j - 128);
+
+			if(x < xmin - 16) continue;
+			if(x > xmax + 16) continue;
+			if(y < ymin - 16) continue;
+			if(y > ymax + 16) continue;
+
+			int west, south;
+			if(mode == ATMOSPHERIC_EDGE_OVERLAY){
+				west = chunk.atmo_edges_v[i][j];
+				south = chunk.atmo_edges_h[i][j];
+//if(west || south) printf("atmospheric edge at %d %d, west=%d, south=%d\n", i, j, west, south);
+			}
+			else{ //ROOM_BOUNDARY_OVERLAY
+				west = chunk.room_edges_v[i][j];
+				south = chunk.room_edges_h[i][j];
+			}
+
+			vec2 base = {x-8,y-8};
+
+			Color c0 = {0,0,0,255};
+			Color c1 = {200,0,0,255};
+			Color c2 = {0,200,0,255};
+			Color c3 = {0,100,200,255};
+			Color c[4] = {c0,c1,c2,c3};
+			if(west > 0) drawSegmentC(base, add(base, (vec2){0,16}), c[west]);
+			if(south > 0) drawSegmentC(base, add(base, (vec2){16,0}), c[south]);
+		}
+	}
+}
+
+void renderRoomOverlay(){
+	double xmin, xmax, ymin, ymax;
+
+	getViewBounds(&xmin, &xmax, &ymin, &ymax);
+	
+	for(int i = 0; i < 256; i++){
+		for(int j = 0; j < 256; j++){
+			double x = EXPAND(i - 128);
+			double y = EXPAND(j - 128);
+
+			if(x < xmin - 16) continue;
+			if(x > xmax + 16) continue;
+			if(y < ymin - 16) continue;
+			if(y > ymax + 16) continue;
+
+			int dat = chunk.room[i][j];
+			//int p = paper[i][j];
+			drawLabel((vec2){x-4,y+4}, TextFormat("%d", dat));
+			//drawLabel(TextFormat("%d", p), (vec2){x+2,y-2});
+		}
+	}
+}
+
+void renderPressureOverlay(){
+	double xmin, xmax, ymin, ymax;
+
+	getViewBounds(&xmin, &xmax, &ymin, &ymax);
+	
+	for(int i = 0; i < 256; i++){
+		for(int j = 0; j < 256; j++){
+			double x = EXPAND(i - 128);
+			double y = EXPAND(j - 128);
+
+			if(x < xmin - 16) continue;
+			if(x > xmax + 16) continue;
+			if(y < ymin - 16) continue;
+			if(y > ymax + 16) continue;
+
+			int r = chunk.room[i][j];
+			if(r < 1) continue;
+			struct Room *ptr = &rooms[r];
+			//drawLabel(TextFormat("%d", dat), (vec2){x-4,y+4});
+			double pressure = r==1 ? chunk.outsideAirPerCell : (1.0*ptr->air / ptr->volume);
+
+			Color c = {0,0,0,pressure/1000.0 * 255.0};
+			if(pressure > 1000.0){ c.a = 255; };
+
+			drawSolidBlock(i-128, j-128, c);
+		}
+	}
+}
+
+
+
+
+
 
 void drawDoodad(struct Doodad *d){
 	Color c;
@@ -208,7 +588,7 @@ void drawDoodad(struct Doodad *d){
 		default:                       c = ORANGE;
 
 	}
-	drawBall(d->pos, 5*zoom, c);
+	drawBall(d->pos, 5, c);
 
 	vec2 offset = {4, -4};
 	drawLabel(add(offset, d->pos), d->label);
@@ -218,65 +598,58 @@ void drawMegaman(vec2 p, int flip){
 	drawSprite(mmtex, p, flip);
 }
 
+void rerenderEverything(){
+	BeginDrawing();
 
-// raw action routines
+	ClearBackground(WHITE);
 
-void mouseMotion(vec2 mouse, vec2 mouse_diff){
-	// mouse_diff might be large for reasons, don't assume it's small
-	int x = mouse.x;
-	int y = mouse.y;
-	int dx = mouse_diff.x;
-	int dy = mouse_diff.y;
-	printf("mouse motion by %d %d to %d %d\n", dx, dy, x, y);
+	/* * grid * */
+	Color c00 = {250,250,250,255};
+	Color c0 = {235,235,235,255};
+	//Color c1 = {230,230,230,255};
+	Color c2 = {200,200,200,255};
+	Color c3 = {128,128,128,255};
+
+	if(zoom >= 3) drawGrid(1, 0, c00);       // microgrid
+	if(zoom >= 2) drawGrid(16, 8, c0);       // tile grid
+	if(zoom > 1.0/16) drawGrid(16*8, 0, c2); // major grid lines i.e. one per cell wall.
+	drawVerticalRule(0, c3);
+	drawHorizontalRule(0, c3);
+
+
+	/* * tiles * */ // ???
+	renderTiles();
+	//for(int i=0; i<db_pieces_ptr; i++){
+	//	const struct placed_piece *ptr = &db_pieces[i];
+	//	drawTileEx(tilesetTex, ptr->tile_ix, ptr->i, ptr->j);
+	//}
+
+	/* * megaman * */ //???
+	vec2 mm = {megaman.x, 16*0.5 + 1.0*megaman.height/2.0};
+	drawMegaman(mm, megaman.facing < 0);
+
+	/* * mock status UI * */
+	//drawUISprite(statstex, db_config.stats_pos_x, screen_h - db_config.stats_pos_y, 2.0);
+
+
+	/* doodads */
+	for(struct Doodad *d = doodads; d < doodad_ptr; d++){ drawDoodad(d); }
+
+
+	/* * debug text * */
+	DrawFPS(0,0);
+	DrawText(TextFormat("Zoom = %lf", zoom), 1, 20, 10, BLACK);
+
+
+	//renderPressureOverlay();
+	renderRoomOverlay();
+	if(overlayMode > 0) renderEdgeOverlay(overlayMode);
+
+	EndDrawing();
 }
 
-void leftClick(int down){
-	printf("mouse left click %d\n", down);
+
+void shutdownEverything(){
+	CloseWindow();
 }
 
-void rightClick(int down){
-	printf("mouse right click %d\n", down);
-}
-
-void mouseWheel(double w){
-	printf("mouse wheel %lf\n", w);
-}
-
-void inputCharacter(int c){
-	printf("input character %c\n", c);
-}
-
-void pressG(){
-	printf("pressed G (%d)\n", KEY_G);
-}
-
-void dispatchInput(){
-	// mouse
-	vec2 mouse_prev = screen.mouse;
-	vec2 mouse_new = updateMouse();
-
-	if(vec2neq(mouse_new, mouse_prev)){
-		vec2 mouse_diff = sub(mouse_new, mouse_prev);
-		mouseMotion(mouse_new, mouse_diff);
-	}
-
-	if(IsMouseButtonPressed(0)){ leftClick(1); }
-	if(IsMouseButtonReleased(0)){ leftClick(0); }
-	if(IsMouseButtonPressed(1)){ rightClick(1); }
-	if(IsMouseButtonReleased(1)){ rightClick(0); }
-
-	double amount = GetMouseWheelMove();
-	if(amount < 0 || 0 < amount){ mouseWheel(amount); }
-
-
-	// keyboard
-	if(IsKeyPressed(KEY_LEFT_CONTROL)){
-		pressG();
-	}
-
-	int c = 0;
-	while((c = GetCharPressed())){
-		inputCharacter(c);
-	}
-
-}

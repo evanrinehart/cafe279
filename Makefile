@@ -13,11 +13,13 @@ CFLAGS = \
 LIBS = -lGL -lm -lpthread -lrt -lX11
 
 OBJECTS = \
+	symbols.o \
 	linear.o \
+	loader.o \
+	renderer.o \
 	floodfill.o \
 	bresenham.o \
-	symbols.o \
-	renderer.o \
+	chunk.o \
 	doodad.o
 
 EXE_NAME = game
@@ -25,13 +27,15 @@ $(EXE_NAME) : $(OBJECTS) main.o sqlite3.o libraylib.a
 	gcc -o $(EXE_NAME) $(OBJECTS) main.o sqlite3.o libraylib.a $(LIBS)
 
 # implicit rules and compile action for .c files used here
-main.o : renderer.h sqlite3.h rlgl.h raylib.h floodfill.h linear.h
+main.o : engine.h renderer.h loader.h
+renderer.o : renderer.h linear.h megaman.h chunk.h engine.h doodad.h raylib.h
+loader.o : loader.h symbols.h linear.h sqlite3.h
+doodad.o : doodad.h symbols.h linear.h
+chunk.o : chunk.h floodfill.h
+symbols.o : symbols.h
 linear.o : linear.h
 bresenham.o : bresenham.h
 floodfill.o : floodfill.h
-doodad.o : raylib.h symbols.h linear.h doodad.h
-renderer.o : raylib.h renderer.h linear.h
-symbols.o : symbols.h
 
 # symbols.c,h are generated from a text file
 symbols.c symbols.h &: tools/symgen symbols.def
