@@ -9,6 +9,7 @@
 */	
 
 #include <stdio.h>
+#include <stdlib.h>
 #include <math.h>
 
 #include <raylib.h>
@@ -51,17 +52,18 @@ extern struct Screen {
 	int w;
 	int h;
 	vec2 mouse;
+	int UIscale;
 } screen;
 
 extern struct World {
 	vec2 mouse;
 } world;
 
+static Font errorFont;
+static Texture errorIcon;
 
 vec2 camera = {0,0};
 double zoom = 1;
-int screenW = 1920/2;
-int screenH = 1080/2;
 
 enum Symbol overlayMode;
 
@@ -90,12 +92,16 @@ int initializeWindow(int w, int h, const char* title){
 
 	screen.w = w;
 	screen.h = h;
+	screen.UIscale = w / (1920 / 2);
 
 	SetConfigFlags(FLAG_MSAA_4X_HINT);
 	SetConfigFlags(FLAG_VSYNC_HINT);
 	//SetTargetFPS(60);
 
 	InitWindow(w, h, title);
+
+	errorFont = LoadFont("assets/fonts/romulus.png");
+	errorIcon = LoadTexture("assets/deadgame.png");
 
 	updateMouse();
 
@@ -123,31 +129,31 @@ int loadAssets(){
 
 
 Vector2 worldToScreen(vec2 p){
-	double x = floor( zoom * p.x + screenW/2 - zoom * camera.x);
-	double y = floor(-zoom * p.y + screenH/2 + zoom * camera.y);
+	double x = floor( zoom * p.x + screen.w/2 - zoom * camera.x);
+	double y = floor(-zoom * p.y + screen.h/2 + zoom * camera.y);
 	Vector2 v = {x,y};
 	return v;
 }
 
 vec2 screenToWorld(double screenX, double screenY){
-	double x = (screenX + zoom*camera.x - screenW/2) / zoom;
-	double y = (screenY - zoom*camera.y - screenH/2) / -zoom;
+	double x = (screenX + zoom*camera.x - screen.w/2) / zoom;
+	double y = (screenY - zoom*camera.y - screen.h/2) / -zoom;
 	vec2 v = {x,y};
 	return v;
 }
 
 void getViewBounds(double *l, double *r, double *b, double *t){
-	*l = camera.x - screenW/2/zoom;
-	*r = camera.x + screenW/2/zoom;
-	*b = camera.y - screenH/2/zoom;
-	*t = camera.y + screenH/2/zoom;
+	*l = camera.x - screen.w/2/zoom;
+	*r = camera.x + screen.w/2/zoom;
+	*b = camera.y - screen.h/2/zoom;
+	*t = camera.y + screen.h/2/zoom;
 }
 
 void drawVerticalRule(double worldX, Color c){
 	vec2 p = {worldX, 0};
 	double x = worldToScreen(p).x + 0.5;
 
-	Vector2 a = {x, screenH};
+	Vector2 a = {x, screen.h};
 	Vector2 b = {x, 0};
 
 	DrawLineV(a, b, c);
@@ -157,7 +163,7 @@ void drawHorizontalRule(double worldY, Color c){
 	vec2 p = {0, worldY};
 	double y = worldToScreen(p).y + 0.5;
 
-	Vector2 a = {screenW, y};
+	Vector2 a = {screen.w, y};
 	Vector2 b = {0, y};
 
 	DrawLineV(a, b, c);
@@ -370,6 +376,7 @@ void dispatchInput(){
 	if(IsKeyPressed(KEY_KP_7)){ pressKeypad(7); }
 	if(IsKeyPressed(KEY_KP_8)){ pressKeypad(8); }
 	if(IsKeyPressed(KEY_KP_9)){ pressKeypad(9); }
+	if(IsKeyPressed(KEY_BACKSLASH)){ bsod("FATAL EXCEPTION"); }
 
 /*
 		if(IsKeyDown(KEY_UP)){
@@ -660,5 +667,61 @@ void rerenderEverything(){
 
 void shutdownEverything(){
 	CloseWindow();
+}
+
+void bsod(const char* finalMsg){
+	int scale = screen.UIscale;
+
+	int padding = scale * 100;
+	int border = scale * 8;
+	int margin = scale * 50;
+	int iconsize = scale * 50;
+
+	int textsize = scale * 24;
+	int msgsep = scale * 54;
+	int msganchor = scale * 12;
+
+	int rx = padding;
+	int ry = padding;
+	int rw = screen.w - 2*padding;
+	int rh = screen.h - 2*padding;
+	int rxx = rx + rw;
+	int ryy = ry + rh;
+	int innerX = rx + 2*border;
+	int innerY = ry + 2*border;
+	int innerYY = ryy - 2*border;
+
+	int cx = screen.w / 2;
+	int cy = screen.h / 2;
+
+	int iconW = scale * errorIcon.width / 2;
+	int iconH = scale * errorIcon.height / 2;
+
+	Rectangle source = {0, 0, errorIcon.width, errorIcon.height};
+	Rectangle dest = {cx - iconW/2, ry + rh / 3 - iconH/2, iconW, iconH};
+	Vector2 zero = {0,0};
+
+	for(;;){
+		BeginDrawing();
+			DrawRectangle(rx, ry, rw, rh, BLACK);
+			DrawRectangle(rx+border, ry+border, rw-2*border, rh-2*border, RED);
+			DrawRectangle(rx+2*border, rx+2*border, rw-4*border, rh-4*border, BLACK);
+			DrawTexturePro(errorIcon, source, dest, zero, 0.0, WHITE); // Draw a part of a texture defined by a rectangle with 'pro' parameters
+			Vector2 p1 = {innerX + margin, innerYY - margin - msganchor - msgsep};
+			Vector2 p2 = {innerX + margin, innerYY - margin - msganchor };
+			DrawTextEx(errorFont, finalMsg, p1, textsize, 4, RED);
+			DrawTextEx(errorFont, "Press any key to continue", p2, textsize, 4, RED);
+		EndDrawing();
+
+/*
+		if(IsKeyDown(KEY_SPACE)) exit(1);
+		if(IsKeyDown(KEY_UP)){   msgsep++; printf("value = %d\n", msgsep); }
+		if(IsKeyDown(KEY_DOWN)){ msgsep--; printf("value = %d\n", msgsep); }
+		if(IsKeyDown(KEY_LEFT)){ msganchor++; printf("value = %d\n", msganchor); }
+		if(IsKeyDown(KEY_RIGHT)){ msganchor--; printf("value = %d\n", msganchor); }
+*/
+
+		if(GetKeyPressed()) exit(1);
+	}
 }
 

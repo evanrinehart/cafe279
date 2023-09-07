@@ -36,7 +36,7 @@ int main(int argc, char* argv[]){
 
 	status = saveWorkspace(stderr, WORKSPACE);
 	if(status < 0){
-		fprintf(stderr, "You realize saveWorkspace failed\n");
+		bsod("You realize saveWorkspace failed");
 	}
 
 	shutdownEverything();
