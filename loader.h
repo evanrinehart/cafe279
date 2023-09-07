@@ -1,5 +1,5 @@
-int loadConfig(const char* filename);
-int loadWorkspace(const char* filename);
+int loadConfig(FILE* logfile, const char* filename);
+int saveConfig(FILE* logfile, const char* filename);
 
-int saveConfig(const char* filename);
-int saveWorkspace(const char* filename);
+int loadWorkspace(FILE* logfile, const char* filename);
+int saveWorkspace(FILE* logfile, const char* filename);

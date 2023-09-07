@@ -40,7 +40,7 @@ floodfill.o : floodfill.h
 
 
 # define a custom pattern rule to compile D files in the same way C files are
-%.o : %.d ; $(DC) -fno-druntime -c $<
+#%.o : %.d ; $(DC) -fno-druntime -c $<
 
 
 # symbols.c,h are generated from a text file

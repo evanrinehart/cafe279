@@ -1,6 +1,7 @@
 /* MAIN.C */
 
 #include <stdlib.h>
+#include <stdio.h>
 #include <renderer.h>
 #include <loader.h>
 #include <engine.h>
@@ -18,10 +19,10 @@ int main(int argc, char* argv[]){
 
 	int status;
 
-	status = loadConfig("config.db");                 if(status < 0){ exit(1); }
+	status = loadConfig(stderr, "config.db");         if(status < 0){ exit(1); }
 	status = initializeWindow(width, height, "GAME"); if(status < 0){ exit(1); }
 	status = loadAssets();                            if(status < 0){ exit(1); }
-	status = loadWorkspace(WORKSPACE);                if(status < 0){ exit(1); }
+	status = loadWorkspace(stderr, WORKSPACE);        if(status < 0){ exit(1); }
 
 	initializeEverything();
 
@@ -33,7 +34,10 @@ int main(int argc, char* argv[]){
 		engine.frameNumber++;
 	}
 
-	saveWorkspace(WORKSPACE);
+	status = saveWorkspace(stderr, WORKSPACE);
+	if(status < 0){
+		fprintf(stderr, "You realize saveWorkspace failed\n");
+	}
 
 	shutdownEverything();
 
