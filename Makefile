@@ -38,17 +38,15 @@ linear.o : linear.h
 bresenham.o : bresenham.h
 floodfill.o : floodfill.h
 
-
 # define a custom pattern rule to compile D files in the same way C files are
 #%.o : %.d ; $(DC) -fno-druntime -c $<
 
-
 # symbols.c,h are generated from a text file
-symbols.c symbols.h &: tools/symgen symbols.def
-	tools/symgen symbols.def
+symbols.c symbols.h &: tools/gensym symbols.def
+	tools/gensym symbols.def
 
-tools/symgen : symgen.c
-	gcc -Wall -Werror -o tools/symgen symgen.c
+tools/gensym : gensym.c
+	gcc -Wall -Werror -o tools/gensym gensym.c
 
 RAYLIB_VERSION = master
 RAYLIB_PATH = vendor/raylib/src
@@ -87,7 +85,7 @@ sqlite3.o : sqlite3.c
 clean :
 	rm -f $(EXE_NAME) main.o $(OBJECTS)
 	rm -f raylib.h rlgl.h libraylib.a
-	rm -f tools/symgen
+	rm -f tools/gensym
 	rm -f symbols.c symbols.h
 
 distclean : clean
