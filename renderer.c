@@ -92,6 +92,8 @@ vec2 updateMouse(){
 
 int initializeWindow(int w, int h, const char* title){
 
+	fprintf(stderr, "%s(%d) initializeWindow...\n", __FILE__, __LINE__);
+
 	screen.w = w;
 	screen.h = h;
 	screen.UIscale = w / (1920 / 2);
@@ -115,6 +117,8 @@ int windowShouldClose(){
 }
 
 int loadAssets(){
+
+	fprintf(stderr, "%s(%d) loadAssets...\n", __FILE__, __LINE__);
 
 	mmtex = LoadTexture("assets/megaman.png");
 	SetTextureWrap(mmtex, TEXTURE_WRAP_CLAMP);
@@ -673,7 +677,7 @@ void shutdownEverything(){
 /* Display BSOD screen until user presses a key to exit */
 void bsod(const char* finalMsg){
 
-	fprintf(stderr, "finalMsg: %s\n", finalMsg);
+	fprintf(stderr, "Final message: %s\n", finalMsg);
 
 	int scale = screen.UIscale;
 
@@ -735,4 +739,10 @@ void bsodED(const char* finalMsg){
 	EndDrawing();
 
 	bsod(finalMsg);
+}
+
+/* Same as bsod but doesn't try to render anything. Exit immediately with message */
+void bsodN(const char* finalMsg){
+	fprintf(stderr, "Final message: %s\n", finalMsg);
+	exit(1);
 }

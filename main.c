@@ -20,10 +20,10 @@ int main(int argc, char* argv[]){
 
 	int status;
 
-	status = loadConfig(stderr, "config.db");         if(status < 0){ exit(1); }
-	status = initializeWindow(width, height, "GAME"); if(status < 0){ exit(1); }
-	status = loadAssets();                            if(status < 0){ exit(1); }
-	status = loadWorkspace(stderr, WORKSPACE);        if(status < 0){ exit(1); }
+	status = loadConfig(stderr, "config.db");         if(status < 0){ bsodN("loadConfig failed"); }
+	status = initializeWindow(width, height, "GAME"); if(status < 0){ bsodN("initializeWindow failed"); }
+	status = loadAssets();                            if(status < 0){ bsod("loadAssets failed"); }
+	status = loadWorkspace(stderr, WORKSPACE);        if(status < 0){ bsod("loadWorkspace failed"); }
 
 	initializeEverything();
 
