@@ -5,6 +5,7 @@
 #include <renderer.h>
 #include <loader.h>
 #include <engine.h>
+#include <bsod.h>
 
 struct Engine engine;
 

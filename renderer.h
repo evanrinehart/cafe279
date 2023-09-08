@@ -10,5 +10,3 @@ void rerenderEverything();
 
 int windowShouldClose();
 void shutdownEverything();
-
-void bsod(const char* finalMsg);

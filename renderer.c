@@ -24,6 +24,8 @@
 
 #include <renderer.h>
 
+#include <bsod.h>
+
 #define CELL 16.0 // the size of a cell in pixels
 #define REDUCE(x) (floor(((x) + CELL/2) / CELL)) // cell index for world coordinate
 #define EXPAND(i) (CELL*(i)) // world coordinate for center of cell at index
@@ -651,7 +653,6 @@ void rerenderEverything(){
 	/* doodads */
 	for(struct Doodad *d = doodads; d < doodad_ptr; d++){ drawDoodad(d); }
 
-
 	/* * debug text * */
 	DrawFPS(0,0);
 	DrawText(TextFormat("Zoom = %lf", zoom), 1, 20, 10, BLACK);
@@ -669,13 +670,17 @@ void shutdownEverything(){
 	CloseWindow();
 }
 
+/* Display BSOD screen until user presses a key to exit */
 void bsod(const char* finalMsg){
+
+	fprintf(stderr, "finalMsg: %s\n", finalMsg);
+
 	int scale = screen.UIscale;
 
 	int padding = scale * 100;
 	int border = scale * 8;
 	int margin = scale * 50;
-	int iconsize = scale * 50;
+	//int iconsize = scale * 50;
 
 	int textsize = scale * 24;
 	int msgsep = scale * 54;
@@ -685,14 +690,14 @@ void bsod(const char* finalMsg){
 	int ry = padding;
 	int rw = screen.w - 2*padding;
 	int rh = screen.h - 2*padding;
-	int rxx = rx + rw;
+	//int rxx = rx + rw;
 	int ryy = ry + rh;
 	int innerX = rx + 2*border;
-	int innerY = ry + 2*border;
+	//int innerY = ry + 2*border;
 	int innerYY = ryy - 2*border;
 
 	int cx = screen.w / 2;
-	int cy = screen.h / 2;
+	//int cy = screen.h / 2;
 
 	int iconW = scale * errorIcon.width / 2;
 	int iconH = scale * errorIcon.height / 2;
@@ -725,3 +730,9 @@ void bsod(const char* finalMsg){
 	}
 }
 
+/* Enter the bsod loop but EndDrawing first. Usable inside renderer */
+void bsodED(const char* finalMsg){
+	EndDrawing();
+
+	bsod(finalMsg);
+}
