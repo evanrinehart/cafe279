@@ -7,4 +7,3 @@ int flood(
 	void* userdata,
 	int (*visit)(void* userdata, int i, int j)
 );
-

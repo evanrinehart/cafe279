@@ -3,23 +3,35 @@
 #include <strings.h>
 #include <floodfill.h>
 
-static int istack[FFSIZE * FFSIZE];
-static int jstack[FFSIZE * FFSIZE];
-static int stack_ptr = 0;
-static int stack_ptr_max = FFSIZE * FFSIZE;
+typedef struct {int i; int j;} int2;
+
+#define STACK_SIZE (4 * FFSIZE * FFSIZE)
+
+static int2 stack[STACK_SIZE];
+static int2 *stack_ptr = stack;
+static int2 *stack_end = stack + STACK_SIZE;
+
+static char flooded[FFSIZE][FFSIZE];
+static int occupied = 0;
+
+#define CRASH(MSG) do { \
+	fprintf(stderr, "%s(%d) %s\n", __FILE__, __LINE__, MSG); \
+	exit(1); \
+} while (0)
 
 static void push(int i, int j){
-	if(stack_ptr == stack_ptr_max){ puts("floodfill stack overflow"); exit(1); }
-	istack[stack_ptr] = i;
-	jstack[stack_ptr] = j;
+	if(stack_ptr >= stack_end) CRASH("floodfill stack overflow");
+
+	stack_ptr->i = i;
+	stack_ptr->j = j;
 	stack_ptr++;
 }
 
-static int pop(int *i, int *j){
-	if(stack_ptr == 0) return 0;
+static int pop(int *iout, int *jout){
+	if (stack_ptr == stack) return 0;
 	stack_ptr--;
-	*i = istack[stack_ptr];
-	*j = jstack[stack_ptr];
+	*iout = stack_ptr->i;
+	*jout = stack_ptr->j;
 	return 1;
 }
 
@@ -28,9 +40,6 @@ static int pop(int *i, int *j){
 /* this floods a map of edges which cannot be crossed, calling a callback for each i,j flooded. */
 /* unlike before there are no observable side effects. Not reentrant. */
 
-static char flooded[FFSIZE][FFSIZE];
-static int occupied = 0;
-
 int flood(
 	int i, int j,
 	char horiz[FFSIZE][FFSIZE],
@@ -38,30 +47,24 @@ int flood(
 	void* userdata,
 	int (*visit)(void* userdata, int i, int j)
 ){
+	if(occupied) CRASH("detected nested call to flood");
 
 	int status = 0;
 
-	if(occupied){
-		fprintf(stderr, "(bug) flood is not re-entrant sorry\n");
-		exit(1);
-	}
-
 	occupied = 1;
-
-	bzero(flooded, FFSIZE * FFSIZE);
-
-	stack_ptr = 0;
+	stack_ptr = stack;
+	bzero(flooded, sizeof flooded);
 
 	do {
-		if(flooded[i][j]) continue;
+		if (flooded[i][j]) continue;
 
 		flooded[i][j] = 1;
-		if((status = visit(userdata,i,j))) break;
+		status = visit(userdata,i,j); if(status) break;
 
-		if(i < FFSIZE-1 &&  vert[i+1][j] == 0 && !flooded[i+1][j]) push(i+1, j);
-		if(i > 0        &&  vert[i][j]   == 0 && !flooded[i-1][j]) push(i-1, j);
-		if(j < FFSIZE-1 && horiz[i][j+1] == 0 && !flooded[i][j+1]) push(i, j+1);
-		if(j > 0        && horiz[i][j]   == 0 && !flooded[i][j-1]) push(i, j-1);
+		if (i < FFSIZE-1 &&  vert[i+1][j] == 0 && !flooded[i+1][j]) push(i+1, j);
+		if (i > 0        &&  vert[i][j]   == 0 && !flooded[i-1][j]) push(i-1, j);
+		if (j < FFSIZE-1 && horiz[i][j+1] == 0 && !flooded[i][j+1]) push(i, j+1);
+		if (j > 0        && horiz[i][j]   == 0 && !flooded[i][j-1]) push(i, j-1);
 	} while (pop(&i, &j));
 
 	occupied = 0;

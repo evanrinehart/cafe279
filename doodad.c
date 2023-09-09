@@ -56,7 +56,6 @@ struct Doodad * findDoodad(vec2 mouse){
 	for(struct Doodad *ptr = doodads; ptr < doodad_ptr; ptr++){
 		vec2 p = ptr->pos;
 		struct aabb box = {p.x - 5, p.x + 5, p.y - 5, p.y + 5};
-		printf("mouse = %lf %lf, box = %lf %lf %lf %lf\n", mouse.x, mouse.y, box.x0, box.x1, box.y0, box.y1);
 		if(pointInAABB(mouse, box)){
 			return ptr;
 		}

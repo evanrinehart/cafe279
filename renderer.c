@@ -25,10 +25,11 @@
 #include <renderer.h>
 
 #include <bsod.h>
+#include <floodfill.h>
 
-#define CELL 16.0 // the size of a cell in pixels
+#define CELL 16.0                                // the size of a cell in pixels
 #define REDUCE(x) (floor(((x) + CELL/2) / CELL)) // cell index for world coordinate
-#define EXPAND(i) (CELL*(i)) // world coordinate for center of cell at index
+#define EXPAND(i) (CELL*(i))                     // world coordinate for center of cell at index
 
 vec2 screenToWorld(double screenX, double screenY);
 void getViewBounds(double *l, double *r, double *b, double *t);
@@ -116,9 +117,31 @@ int windowShouldClose(){
 	return WindowShouldClose();
 }
 
+static int icon_count = 0;
+static Texture icons[256];
+static Font infoFont;
+static Font infoFont2;
+static Font infoFont3;
+
+//static const char* fontpath = "assets/fonts/Noto_Sans_SC/NotoSansSC-Regular.ttf";
+//static const char* fontpath = "assets/fonts/Fira_Sans_Condensed/FiraSansCondensed-Regular.ttf";
+static const char* fontpath = "assets/fonts/Roboto_Condensed/RobotoCondensed-Regular.ttf";
+//static const char* fontpath = "assets/fonts/Roboto_Condensed/RobotoCondensed-Regular.ttf";
+static int F = 13;
+
 int loadAssets(){
 
 	fprintf(stderr, "%s(%d) loadAssets...\n", __FILE__, __LINE__);
+
+	FilePathList fpl = LoadDirectoryFiles("assets/icons");
+	for (int i = 0; i < fpl.count; i++) {
+		icons[i] = LoadTexture(fpl.paths[i]);
+		icon_count++;
+	}
+
+	infoFont  = LoadFontEx(fontpath, F, NULL, 250);
+	infoFont2 = LoadFontEx(fontpath, 2*F, NULL, 250);
+	infoFont3 = LoadFontEx(fontpath, 3*F, NULL, 250);
 
 	mmtex = LoadTexture("assets/megaman.png");
 	SetTextureWrap(mmtex, TEXTURE_WRAP_CLAMP);
@@ -281,7 +304,7 @@ void mouseMotion(vec2 mouse, vec2 delta){
 	int y = mouse.y;
 	int dx = delta.x;
 	int dy = delta.y;
-	printf("mouse motion by %d %d to %d %d\n", dx, dy, x, y);
+	//printf("mouse motion by %d %d to %d %d\n", dx, dy, x, y);
 
 
 
@@ -297,7 +320,9 @@ void mouseMotion(vec2 mouse, vec2 delta){
 void leftClick(vec2 p, int down){
 	mouse_buttons[0] = down;
 
+
 	vec2 q = screenToWorld(p.x, p.y);
+	if(down) printf("outside = %d\n", isOutside(REDUCE(q.x)+128, REDUCE(q.y)+128));
 	if(down){
 		struct Doodad * d = findDoodad(q);
 		if(d){ clickDoodad(d); }
@@ -633,9 +658,9 @@ void rerenderEverything(){
 	Color c2 = {200,200,200,255};
 	Color c3 = {128,128,128,255};
 
-	if(zoom >= 3) drawGrid(1, 0, c00);       // microgrid
-	if(zoom >= 2) drawGrid(16, 8, c0);       // tile grid
-	if(zoom > 1.0/16) drawGrid(16*8, 0, c2); // major grid lines i.e. one per cell wall.
+	//if(zoom >= 3) drawGrid(1, 0, c00);       // microgrid
+	//if(zoom >= 2) drawGrid(16, 8, c0);       // tile grid
+	//if(zoom > 1.0/16) drawGrid(16*8, 0, c2); // major grid lines i.e. one per cell wall.
 	drawVerticalRule(0, c3);
 	drawHorizontalRule(0, c3);
 
@@ -657,13 +682,31 @@ void rerenderEverything(){
 	/* doodads */
 	for(struct Doodad *d = doodads; d < doodad_ptr; d++){ drawDoodad(d); }
 
+//RLAPI void DrawTextEx(Font font, const char *text, Vector2 position, float fontSize, float spacing, Color tint); // Draw text using font and additional parameters
+
+	int S = 1.0;
+
+
+	//DrawTextEx(infoFont, "Line 1: 页面入口也是页面招待处。",  (Vector2){100, 20}, F, S, BLACK);
+	DrawTextEx(infoFont, "Line 2: «I'll Remember» marcó un cambio radical en comparación",     (Vector2){100, 20 + 2*F}, F, S, BLACK);
+
+	/*
+	DrawTextEx(infoFont, "Line 1: Here's a bunch of info.",  (Vector2){100, 20}, F, S, BLACK);
+	DrawTextEx(infoFont, "Line 2: Quick Fox Lazy Dog?!",     (Vector2){100, 40}, F, S, BLACK);
+	DrawTextEx(infoFont2, "Line 1: Here's a bunch of info.", (Vector2){100, 60}, 2*F, S, BLACK);
+	DrawTextEx(infoFont2, "Line 2: Quick Fox Lazy Dog?!",    (Vector2){100, 80}, 2*F, S, BLACK);
+	DrawTextEx(infoFont2, "Title of the Room (Etc)",         (Vector2){100, 100}, 2*F, S, BLACK);
+	DrawTextEx(infoFont3, "Line 1: Here's a bunch of info.", (Vector2){100, 130}, 3*F, S, BLACK);
+	DrawTextEx(infoFont3, "Line 2: Quick Fox Lazy Dog?!",    (Vector2){100, 160}, 3*F, S, BLACK);
+	*/
+
 	/* * debug text * */
 	DrawFPS(0,0);
 	DrawText(TextFormat("Zoom = %lf", zoom), 1, 20, 10, BLACK);
 
 
 	//renderPressureOverlay();
-	renderRoomOverlay();
+	//renderRoomOverlay();
 	if(overlayMode > 0) renderEdgeOverlay(overlayMode);
 
 	EndDrawing();
@@ -684,7 +727,6 @@ void bsod(const char* finalMsg){
 	int padding = scale * 100;
 	int border = scale * 8;
 	int margin = scale * 50;
-	//int iconsize = scale * 50;
 
 	int textsize = scale * 24;
 	int msgsep = scale * 54;
@@ -715,7 +757,7 @@ void bsod(const char* finalMsg){
 			DrawRectangle(rx, ry, rw, rh, BLACK);
 			DrawRectangle(rx+border, ry+border, rw-2*border, rh-2*border, RED);
 			DrawRectangle(rx+2*border, rx+2*border, rw-4*border, rh-4*border, BLACK);
-			DrawTexturePro(errorIcon, source, dest, zero, 0.0, WHITE); // Draw a part of a texture defined by a rectangle with 'pro' parameters
+			DrawTexturePro(errorIcon, source, dest, zero, 0.0, WHITE);
 			Vector2 p1 = {innerX + margin, innerYY - margin - msganchor - msgsep};
 			Vector2 p2 = {innerX + margin, innerYY - margin - msganchor };
 			DrawTextEx(errorFont, finalMsg, p1, textsize, 4, RED);
