@@ -105,6 +105,8 @@ int initializeWindow(int w, int h, const char* title){
 
 	InitWindow(w, h, title);
 
+	SetWindowSize(w,h);
+
 	errorFont = LoadFont("assets/fonts/romulus.png");
 	errorIcon = LoadTexture("assets/deadgame.png");
 
@@ -388,7 +390,7 @@ void dispatchInput(){
 
 
 	// keyboard
-	if(IsKeyPressed(KEY_LEFT_CONTROL)){
+	if(IsKeyPressed(KEY_G)){
 		pressG();
 	}
 
@@ -654,51 +656,26 @@ void rerenderEverything(){
 	/* * grid * */
 	Color c00 = {250,250,250,255};
 	Color c0 = {235,235,235,255};
-	//Color c1 = {230,230,230,255};
 	Color c2 = {200,200,200,255};
 	Color c3 = {128,128,128,255};
 
-	//if(zoom >= 3) drawGrid(1, 0, c00);       // microgrid
-	//if(zoom >= 2) drawGrid(16, 8, c0);       // tile grid
-	//if(zoom > 1.0/16) drawGrid(16*8, 0, c2); // major grid lines i.e. one per cell wall.
+	if(zoom >= 3) drawGrid(1, 0, c00);       // microgrid
+	if(zoom >= 2) drawGrid(16, 8, c0);       // tile grid
+	if(zoom > 1.0/16) drawGrid(16*8, 0, c2); // major grid lines i.e. one per cell wall.
 	drawVerticalRule(0, c3);
 	drawHorizontalRule(0, c3);
 
-
-	/* * tiles * */ // ???
+	/* * tiles * */
 	renderTiles();
-	//for(int i=0; i<db_pieces_ptr; i++){
-	//	const struct placed_piece *ptr = &db_pieces[i];
-	//	drawTileEx(tilesetTex, ptr->tile_ix, ptr->i, ptr->j);
-	//}
 
-	/* * megaman * */ //???
+	/* * megaman * */
 	drawMegaman(vec2(megaman.x, 8), megaman.facing < 0);
 
 	/* * mock status UI * */
 	//drawUISprite(statstex, db_config.stats_pos_x, screen_h - db_config.stats_pos_y, 2.0);
 
-
 	/* doodads */
 	for(struct Doodad *d = doodads; d < doodad_ptr; d++){ drawDoodad(d); }
-
-//RLAPI void DrawTextEx(Font font, const char *text, Vector2 position, float fontSize, float spacing, Color tint); // Draw text using font and additional parameters
-
-	int S = 1.0;
-
-
-	//DrawTextEx(infoFont, "Line 1: 页面入口也是页面招待处。",  (Vector2){100, 20}, F, S, BLACK);
-	DrawTextEx(infoFont, "Line 2: «I'll Remember» marcó un cambio radical en comparación",     (Vector2){100, 20 + 2*F}, F, S, BLACK);
-
-	/*
-	DrawTextEx(infoFont, "Line 1: Here's a bunch of info.",  (Vector2){100, 20}, F, S, BLACK);
-	DrawTextEx(infoFont, "Line 2: Quick Fox Lazy Dog?!",     (Vector2){100, 40}, F, S, BLACK);
-	DrawTextEx(infoFont2, "Line 1: Here's a bunch of info.", (Vector2){100, 60}, 2*F, S, BLACK);
-	DrawTextEx(infoFont2, "Line 2: Quick Fox Lazy Dog?!",    (Vector2){100, 80}, 2*F, S, BLACK);
-	DrawTextEx(infoFont2, "Title of the Room (Etc)",         (Vector2){100, 100}, 2*F, S, BLACK);
-	DrawTextEx(infoFont3, "Line 1: Here's a bunch of info.", (Vector2){100, 130}, 3*F, S, BLACK);
-	DrawTextEx(infoFont3, "Line 2: Quick Fox Lazy Dog?!",    (Vector2){100, 160}, 3*F, S, BLACK);
-	*/
 
 	/* * debug text * */
 	DrawFPS(0,0);
@@ -776,6 +753,18 @@ void bsod(const char* finalMsg){
 	}
 }
 
+
+/* run physics for 1 step */
+void physics(){
+
+	for(struct Doodad *d = doodads; d < doodad_ptr; d++){
+		updateDoodad(d);
+	}
+
+}
+
+
+
 /* Enter the bsod loop but EndDrawing first. Usable inside renderer */
 void bsodED(const char* finalMsg){
 	EndDrawing();
@@ -788,3 +777,8 @@ void bsodN(const char* finalMsg){
 	fprintf(stderr, "Final message: %s\n", finalMsg);
 	exit(1);
 }
+
+
+
+
+
