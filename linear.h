@@ -30,6 +30,7 @@ vec2 normalize(struct vec2 v);
 double angle(struct vec2 a, struct vec2 b);
 struct vec2 rotate(struct vec2 u, double angle);
 vec2 cis(double angle);
+vec2 rcis(double r, double angle);
 
 struct vec2 normal(struct vec2 a, struct vec2 b);
 struct vec2 project(struct vec2 a, struct vec2 b);

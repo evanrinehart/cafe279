@@ -67,7 +67,11 @@ struct vec2 rotate(struct vec2 v, double angle){
 }
 
 vec2 cis(double angle){
-	return (vec2){cos(angle), sin(angle)};
+	vec2 v = {cos(angle), sin(angle)}; return v;
+}
+
+vec2 rcis(double r, double angle){
+	vec2 v = {r * cos(angle), r * sin(angle)}; return v;
 }
 
 struct vec2 normal(struct vec2 a, struct vec2 b){
