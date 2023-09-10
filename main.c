@@ -30,7 +30,7 @@ int main(int argc, char* argv[]){
 	for(;;){
 		rerenderEverything();
 		dispatchInput();
-		// do physics here
+		physics();
 		if(windowShouldClose()) break;
 		engine.frameNumber++;
 	}
