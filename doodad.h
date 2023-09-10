@@ -13,6 +13,8 @@ struct Doodad randomDoodad();
 void clickDoodad(struct Doodad *d);
 struct Doodad * findDoodad(vec2 p);
 
+void updateDoodad(struct Doodad *doodad);
+
 #define MAX_DOODADS 1024
 extern struct Doodad doodads[MAX_DOODADS];
 extern struct Doodad *doodad_ptr;

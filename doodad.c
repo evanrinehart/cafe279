@@ -2,11 +2,14 @@
 #include <stdlib.h>
 #include <string.h>
 #include <limits.h>
+#include <math.h>
 
 #include <linear.h>
 #include <symbols.h>
 
 #include <doodad.h>
+
+#define PI M_PI
 
 struct Doodad doodads[MAX_DOODADS];
 struct Doodad *doodad_ptr = doodads;
@@ -61,4 +64,12 @@ struct Doodad * findDoodad(vec2 mouse){
 		}
 	}
 	return NULL;
+}
+
+
+void updateDoodad(struct Doodad *doodad){
+	vec2 p = doodad->pos;
+	double r = norm(p);
+	double angle = atan2(p.y, p.x);
+	doodad->pos = rcis(r, angle + 0.05 * 0.01666 * 2 * PI);
 }
