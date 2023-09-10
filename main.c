@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <renderer.h>
+#include <physics.h>
 #include <loader.h>
 #include <engine.h>
 #include <bsod.h>

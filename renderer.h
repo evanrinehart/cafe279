@@ -8,7 +8,5 @@ void initializeEverything();
 void dispatchInput();
 void rerenderEverything();
 
-void physics();
-
 int windowShouldClose();
 void shutdownEverything();

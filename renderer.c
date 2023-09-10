@@ -754,14 +754,6 @@ void bsod(const char* finalMsg){
 }
 
 
-/* run physics for 1 step */
-void physics(){
-
-	for(struct Doodad *d = doodads; d < doodad_ptr; d++){
-		updateDoodad(d);
-	}
-
-}
 
 
 
