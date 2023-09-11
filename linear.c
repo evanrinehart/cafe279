@@ -80,12 +80,16 @@ struct vec2 normal(struct vec2 a, struct vec2 b){
 	return out;
 }
 
-struct vec2 project(struct vec2 a, struct vec2 b){
+struct vec2 projection(struct vec2 a, struct vec2 b){
 	return scale(dot(a,b)/dot(b,b), b);
 }
 
-struct vec2 reflect(struct vec2 a, struct vec2 L){
-	return sub(scale(2, project(a, L)), a);
+struct vec2 reflection(struct vec2 a, struct vec2 L){
+	return sub(scale(2, projection(a, L)), a);
+}
+
+struct vec2 rejection(struct vec2 a, struct vec2 b){
+	return sub(a, projection(a,b));
 }
 
 double distanceSquaredTo(vec2 a, vec2 b){
@@ -185,4 +189,32 @@ int segmentsIntersection(struct vec2 p0, struct vec2 p1, struct vec2 q0, struct 
 
 	return bad ? 0 : 1;
 
+}
+
+
+int quadraticFormula(double A, double B, double C, double *answer){
+	// Ax^2 + Bx + C = 0
+
+	// (-B +- sqrt(B^2 - 4AC)) / 2A   is the Quadratic Formula
+	// 2C / (-B -+ sqrt(B^2 - 4AC))   Citardauq Formula
+
+	double D = B*B - 4*A*C;
+	double TA = 2*A;
+
+	if(D <  0) return -1;
+	if(D == 0) { *answer = -B/TA; return isnan(*answer) ? -1 : 0; }
+	if(A == 0) { *answer = -C/B; return 0; }
+	if(C == 0) { *answer = -B/A < 0 ? -B/A : 0; return 0; }
+
+	double M = -B / TA;
+	double S = sqrt(D);
+
+	double root1 = 0;
+	if(M <= 0) root1 = (-B - S) / TA;
+	if(M >= 0) root1 = (-B + S) / TA;
+
+	double root2 = C / (root1 * A);
+
+	*answer = root1 < root2 ? root1 : root2;
+	return 0;
 }

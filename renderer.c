@@ -27,6 +27,8 @@
 #include <bsod.h>
 #include <floodfill.h>
 
+#include <physics.h> // temporary
+
 #define CELL 16.0                                // the size of a cell in pixels
 #define REDUCE(x) (floor(((x) + CELL/2) / CELL)) // cell index for world coordinate
 #define EXPAND(i) (CELL*(i))                     // world coordinate for center of cell at index
@@ -302,14 +304,6 @@ void initializeEverything(){
 
 void mouseMotion(vec2 mouse, vec2 delta){
 	// mouse_diff might be large for reasons, don't assume it's small
-	int x = mouse.x;
-	int y = mouse.y;
-	int dx = delta.x;
-	int dy = delta.y;
-	//printf("mouse motion by %d %d to %d %d\n", dx, dy, x, y);
-
-
-
 
 	/* pan service code: */
 	if(mouse_buttons[2]){
@@ -354,7 +348,8 @@ void inputCharacter(int c){
 }
 
 void pressG(){
-	printf("pressed G (%d)\n", KEY_G);
+	addObject();
+	//printf("pressed G (%d)\n", KEY_G);
 }
 
 void pressKeypad(int n){
@@ -625,6 +620,12 @@ void renderPressureOverlay(){
 
 
 
+void drawObject(struct Object *obj){
+	drawBall(obj->pos, 4, RED);
+	//vec2 offset = {4, -4};
+	//drawLabel(add(offset, d->pos), d->label);
+}
+
 
 void drawDoodad(struct Doodad *d){
 	Color c;
@@ -632,9 +633,9 @@ void drawDoodad(struct Doodad *d){
 		case NULL_SYMBOL:              c = BLACK; break;
 		case ATMOSPHERIC_EDGE_OVERLAY: c = MAGENTA; break;
 		case ROOM_BOUNDARY_OVERLAY:    c = SKYBLUE; break;
-		case SYM3:                     c = DARKGREEN; break;
-		case SYM4:                     c = GOLD; break;
-		case SYM5:                     c = MAROON; break;
+		case PHYSICS_FREEFALL:         c = DARKGREEN; break;
+		case PHYSICS_IDLE:             c = GOLD; break;
+		//case SYM5:                     c = MAROON; break;
 		default:                       c = ORANGE;
 
 	}
@@ -675,7 +676,8 @@ void rerenderEverything(){
 	//drawUISprite(statstex, db_config.stats_pos_x, screen_h - db_config.stats_pos_y, 2.0);
 
 	/* doodads */
-	for(struct Doodad *d = doodads; d < doodad_ptr; d++){ drawDoodad(d); }
+	//for(struct Doodad *d = doodads; d < doodad_ptr; d++){ drawDoodad(d); }
+	for(struct Object *obj = objects; obj < objects_ptr; obj++){ drawObject(obj); }
 
 	/* * debug text * */
 	DrawFPS(0,0);

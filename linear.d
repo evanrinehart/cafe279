@@ -40,6 +40,10 @@ struct vec2 {
 		return (2 * a.project(L)) - a;
 	}
 
+	vec2 rejection(vec 2){
+		return this - project(b);
+	}
+
 
 	vec2 rotate(vec2 v, double angle){
 		if(angle == 0.0) return v;
