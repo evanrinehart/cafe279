@@ -67,15 +67,8 @@ struct ClipResult clip(vec2 a, vec2 jump, double r, vec2 wallA, vec2 wallB){
 	// and new position `b' is sufficiently far from `a'.
 	// Return: fraction of path allowed before hitting the wall.
 
-	// line P Q goes right, wall is below
-	// follow P to Q, up out of screen, wall is on your right
-
-	// seg x path > 0, moving away from wall
-	// seg x path < 0, moving into wall
-
 	vec2 wall = sub(wallB, wallA); // q - p
 
-//printf("cross = %lf\n", cross(wall,jump));
 	if(cross(wall, jump) >= 0) return NO_CLIP; // moving away from wall
 
 	vec2 jump_into = rejection(jump, wall);
@@ -86,11 +79,6 @@ struct ClipResult clip(vec2 a, vec2 jump, double r, vec2 wallA, vec2 wallB){
 	vec2 bprime = add(b_into, correction);
 
 	vec2 hitPoint;
-//printf("aprime = %lf %lf\n", aprime.x, aprime.y);
-//printf("bprime = %lf %lf\n", bprime.x, bprime.y);
-//printf("wallA = %lf %lf\n", wallA.x, wallA.y);
-//printf("wallB = %lf %lf\n", wallB.x, wallB.y);
-//printf("SI = %d\n", segmentsIntersection(aprime, bprime, wallA, wallB, &hitPoint));
 	if(!segmentsIntersection(aprime, bprime, wallA, wallB, &hitPoint)) return NO_CLIP;
 
 	double fraction = normSquared(sub(hitPoint, aprime)) / normSquared(sub(bprime, aprime));
@@ -163,7 +151,7 @@ void physObject(struct Object *obj){
 		obj->pos = newpos;
 		obj->vel = reflection(obj->vel, surf);
 
-		double lossfactor = 0.25;
+		double lossfactor = 0.1;
 		obj->vel = scale(lossfactor, obj->vel);
 	}
 	else {

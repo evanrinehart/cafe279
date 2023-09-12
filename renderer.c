@@ -331,13 +331,10 @@ void leftClick(vec2 p, int down){
 		putBlock(i, j, blockChoice);
 	}
 
-
-	if(down) printf("outside = %d\n", isOutside(REDUCE(q.x)+128, REDUCE(q.y)+128));
 	if(down){
 		struct Doodad * d = findDoodad(q);
 		if(d){ clickDoodad(d); }
 	}
-	//printf("mouse left click %d at %lf %lf\n", down, p.x, p.y);
 }
 
 void rightClick(vec2 p, int down){
@@ -371,7 +368,6 @@ void inputCharacter(int c){
 
 void pressG(){
 	addObject();
-	//printf("pressed G (%d)\n", KEY_G);
 }
 
 void pressR(){
@@ -383,6 +379,19 @@ void pressKeypad(int n){
 	if(n==1) { printf("atmo edge overlay\n"); overlayMode = ATMOSPHERIC_EDGE_OVERLAY; }
 	if(n==2) { printf("room boundary overlay\n"); overlayMode = ROOM_BOUNDARY_OVERLAY; }
 }
+
+void holdUpDownArrow(vec2 mouse, int updown){
+	vec2 p = screenToWorld(mouse.x, mouse.y);
+	int i = REDUCE(p.x);
+	int j = REDUCE(p.y);
+	int rid = chunk.room[i+128][j+128];
+	struct Room *room = roomById(rid); if(room == NULL) return;
+	room->air += updown * 50;
+	if(room->air < 0) room->air = 0;
+	if(updown > 0) printf("room %d pump it up! %d\n", room->id, room->air);
+	else           printf("room %d deflating! %d\n", room->id, room->air);
+}
+
 
 
 // source event from raylib
@@ -414,6 +423,9 @@ void dispatchInput(){
 	if(IsKeyPressed(KEY_G)){ pressG(); }
 	if(IsKeyPressed(KEY_R)){ pressR(); }
 
+	if(IsKeyDown(KEY_UP))  { holdUpDownArrow(mouse,  1); }
+	if(IsKeyDown(KEY_DOWN)){ holdUpDownArrow(mouse, -1); }
+
 	int c = 0;
 	while((c = GetCharPressed())){
 		inputCharacter(c);
@@ -429,71 +441,9 @@ void dispatchInput(){
 	if(IsKeyPressed(KEY_KP_7)){ pressKeypad(7); }
 	if(IsKeyPressed(KEY_KP_8)){ pressKeypad(8); }
 	if(IsKeyPressed(KEY_KP_9)){ pressKeypad(9); }
-	if(IsKeyPressed(KEY_BACKSLASH)){ bsod("FATAL EXCEPTION"); }
+	if(IsKeyPressed(KEY_BACKSLASH)){ bsod("FATAL EXCEPTION (\\)"); }
 
 /*
-		if(IsKeyDown(KEY_UP)){
-			struct vec2 xy = screen_to_world(GetMousePosition());
-			int i, j;
-			pointToTile(xy, &i, &j);
-			int r = chunk.room[i+128][j+128];
-			db_rooms[r].air += 50;
-			printf("pump it up! %d\n", db_rooms[r].air);
-		}
-
-		if(IsKeyDown(KEY_DOWN)){
-			struct vec2 xy = screen_to_world(GetMousePosition());
-			int i, j;
-			pointToTile(xy, &i, &j);
-			int r = chunk.room[i+128][j+128];
-			for(int c = 0; c < 50; c++){
-				if(db_rooms[r].air > 0){
-					db_rooms[r].air -= 1;
-					printf("deflating! %d\n", db_rooms[r].air);
-				}
-			}
-		}
-
-		if(0 && IsMouseButtonPressed(0)){
-			struct vec2 xy = screen_to_world(GetMousePosition());
-			int i, j;
-			pointToTile(xy, &i, &j);
-			printf("%d %d\n", i + 128, j + 128);
-			//if(tileAt(i,j)) deleteTileAt(i, j);
-			if(!tileAt(i,j)){
-				//newBlock(i+128, j+128, newTileIx);
-				addBlock(i+128, j+128);
-			}
-			
-		}
-
-		if(0 && IsMouseButtonPressed(1)){
-			struct vec2 xy = screen_to_world(GetMousePosition());
-			int i, j;
-			pointToTile(xy, &i, &j);
-
-			if(tileAt(i,j)){
-				deleteBlock(i+128, j+128);
-			}
-		}
-
-		if(IsKeyPressed(KEY_V)){
-			struct vec2 xy = screen_to_world(GetMousePosition());
-			int i, j;
-			pointToTile(xy, &i, &j);
-
-			int v = measureVolume(i+128, j+128);
-			printf("volume = %d\n", v);
-		}
-
-		if(IsKeyPressed(KEY_O)){
-			struct vec2 xy = screen_to_world(GetMousePosition());
-			int i, j;
-			pointToTile(xy, &i, &j);
-
-			int o = isOutside(i+128, j+128);
-			printf("is outside: %d\n", o);
-		}
 
 */
 
@@ -569,7 +519,6 @@ void renderEdgeOverlay(enum Symbol mode){
 			if(mode == ATMOSPHERIC_EDGE_OVERLAY){
 				west = chunk.atmo_edges_v[i][j];
 				south = chunk.atmo_edges_h[i][j];
-//if(west || south) printf("atmospheric edge at %d %d, west=%d, south=%d\n", i, j, west, south);
 			}
 			else{ //ROOM_BOUNDARY_OVERLAY
 				west = chunk.room_edges_v[i][j];
@@ -654,14 +603,13 @@ void drawObject(struct Object *obj){
 	//drawSolidBlock(12,10,RED);
 
 	struct CellWindow win = discFootprint(obj->pos, r);
-	//printf("win = %d %d %d %d\n", win.imin, win.imax, win.jmin, win.jmax);
+
 	for(int i=win.imin; i<=win.imax; i++){
 	for(int j=win.jmin; j<=win.jmax; j++){
 		//drawSolidBlock(i,j,BLUE);
 	}
 	}
-	//vec2 offset = {4, -4};
-	//drawLabel(add(offset, d->pos), d->label);
+
 	drawBall(obj->pos, r, RED);
 }
 
@@ -715,7 +663,6 @@ void rerenderEverything(){
 	//drawUISprite(statstex, db_config.stats_pos_x, screen_h - db_config.stats_pos_y, 2.0);
 
 	/* doodads */
-	//for(struct Doodad *d = doodads; d < doodad_ptr; d++){ drawDoodad(d); }
 	for(struct Object *obj = objects; obj < objects_ptr; obj++){ drawObject(obj); }
 
 	/* * debug text * */
@@ -781,14 +728,6 @@ void bsod(const char* finalMsg){
 			DrawTextEx(errorFont, finalMsg, p1, textsize, 4, RED);
 			DrawTextEx(errorFont, "Press any key to continue", p2, textsize, 4, RED);
 		EndDrawing();
-
-/*
-		if(IsKeyDown(KEY_SPACE)) exit(1);
-		if(IsKeyDown(KEY_UP)){   msgsep++; printf("value = %d\n", msgsep); }
-		if(IsKeyDown(KEY_DOWN)){ msgsep--; printf("value = %d\n", msgsep); }
-		if(IsKeyDown(KEY_LEFT)){ msganchor++; printf("value = %d\n", msganchor); }
-		if(IsKeyDown(KEY_RIGHT)){ msganchor--; printf("value = %d\n", msganchor); }
-*/
 
 		if(GetKeyPressed()) exit(1);
 	}

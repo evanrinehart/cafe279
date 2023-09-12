@@ -69,3 +69,4 @@ int measureRoom(int i, int j);
 int measureCavity(int i, int j);
 
 void addRoom(int id, int air, int volume);
+struct Room * roomById(int id);
