@@ -7,6 +7,8 @@
 #include <chunk.h>
 
 #include <math.h>
+#include <stdlib.h>
+#include <limits.h>
 
 #define PI M_PI
 
@@ -151,7 +153,7 @@ void physObject(struct Object *obj){
 		obj->pos = newpos;
 		obj->vel = reflection(obj->vel, surf);
 
-		double lossfactor = 0.1;
+		double lossfactor = 0.96;
 		obj->vel = scale(lossfactor, obj->vel);
 	}
 	else {
@@ -161,10 +163,15 @@ void physObject(struct Object *obj){
 
 }
 
+double randf(){
+	int i = rand();
+	return (double) i / INT_MAX;
+}
+
 void addObject(){
 	struct Object *obj = objects_ptr++;
 	obj->pos = vec2(-16 * 4, 64);
-	obj->vel = vec2(50,100);
+	obj->vel = vec2(randf()*50 - 25, randf()*200);
 }
 
 /* run physics for 1 step */

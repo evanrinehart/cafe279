@@ -595,14 +595,22 @@ void renderPressureOverlay(){
 
 
 void drawObject(struct Object *obj){
-	double r = 4;
+	double radius = 4;
+
+	int n = obj - objects;
+
+	double trash;
+
+	double x = modf(n * sqrt(2), &trash);
+
+	Color c = ColorFromHSV(x * 360, 1.0, 1.0);
 
 	//drawSolidBlock(10,10,RED);
 	//drawSolidBlock(10,12,RED);
 	//drawSolidBlock(10,14,RED);
 	//drawSolidBlock(12,10,RED);
 
-	struct CellWindow win = discFootprint(obj->pos, r);
+	struct CellWindow win = discFootprint(obj->pos, radius);
 
 	for(int i=win.imin; i<=win.imax; i++){
 	for(int j=win.jmin; j<=win.jmax; j++){
@@ -610,7 +618,7 @@ void drawObject(struct Object *obj){
 	}
 	}
 
-	drawBall(obj->pos, r, RED);
+	drawBall(obj->pos, radius, c);
 }
 
 
