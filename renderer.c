@@ -576,11 +576,12 @@ void renderPressureOverlay(){
 			if(y < ymin - 16) continue;
 			if(y > ymax + 16) continue;
 
-			int r = chunk.room[i][j];
-			if(r < 1) continue;
-			struct Room *ptr = &rooms[r];
+			int rid = chunk.room[i][j];
+			if(rid < 1) continue;
+			struct Room *ptr = roomById(rid);
+			if(ptr == NULL) continue;
 			//drawLabel(TextFormat("%d", dat), (vec2){x-4,y+4});
-			double pressure = r==1 ? chunk.outsideAirPerCell : (1.0*ptr->air / ptr->volume);
+			double pressure = rid==1 ? chunk.outsideAirPerCell : (1.0*ptr->air / ptr->volume);
 
 			Color c = {0,0,0,pressure/1000.0 * 255.0};
 			if(pressure > 1000.0){ c.a = 255; };
@@ -678,7 +679,7 @@ void rerenderEverything(){
 	DrawText(TextFormat("Zoom = %lf", zoom), 1, 20, 10, BLACK);
 
 
-	//renderPressureOverlay();
+	renderPressureOverlay();
 	renderRoomOverlay();
 	if(overlayMode > 0) renderEdgeOverlay(overlayMode);
 
