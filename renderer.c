@@ -29,10 +29,6 @@
 
 #include <physics.h> // temporary
 
-#define CELL 16.0                                // the size of a cell in pixels
-#define REDUCE(x) (floor(((x) + CELL/2) / CELL)) // cell index for world coordinate
-#define EXPAND(i) (CELL*(i))                     // world coordinate for center of cell at index
-
 vec2 screenToWorld(double screenX, double screenY);
 void getViewBounds(double *l, double *r, double *b, double *t);
 void drawVerticalRule(double worldX, Color c);
@@ -83,6 +79,15 @@ struct Megaman megaman;
 static Texture mmtex;
 static Texture statstex;
 static Texture tilesetTex;
+
+
+enum Tool {BLOCK_EDIT_TOOL};
+
+
+enum Tool tool = BLOCK_EDIT_TOOL;
+
+
+int blockChoice = 250;
 
 
 vec2 updateMouse(){
@@ -247,7 +252,7 @@ void drawSegment(vec2 a, vec2 b){
 	drawSegmentC(a, b, MAGENTA);
 }
 
-void drawSolidBlock(int i, int j, Color c){
+void drawSolidBlock(int i, int j, Color c) {
 	vec2 p = {EXPAND(i) - CELL/2, EXPAND(j) + CELL/2};
 	Vector2 screen = worldToScreen(p);
 	DrawRectangle(screen.x, screen.y, CELL*zoom, CELL*zoom, c);
@@ -297,7 +302,8 @@ void drawUISprite(Texture tex, double x, double y, double zoom){
 /* Controller */
 
 void initializeEverything(){
-	initializeRooms();
+	//initializeRooms();
+	initializeOutdoorsOnly();
 }
 
 // raw action routines... master controller
@@ -316,8 +322,16 @@ void mouseMotion(vec2 mouse, vec2 delta){
 void leftClick(vec2 p, int down){
 	mouse_buttons[0] = down;
 
-
 	vec2 q = screenToWorld(p.x, p.y);
+
+	if(down && tool == BLOCK_EDIT_TOOL){
+		puts("put block");
+		int i = REDUCE(q.x) + 128;
+		int j = REDUCE(q.y) + 128;
+		putBlock(i, j, blockChoice);
+	}
+
+
 	if(down) printf("outside = %d\n", isOutside(REDUCE(q.x)+128, REDUCE(q.y)+128));
 	if(down){
 		struct Doodad * d = findDoodad(q);
@@ -329,7 +343,15 @@ void leftClick(vec2 p, int down){
 void rightClick(vec2 p, int down){
 	mouse_buttons[1] = down;
 
-	printf("mouse right click %d\n", down);
+	vec2 q = screenToWorld(p.x, p.y);
+
+	if(down && tool == BLOCK_EDIT_TOOL){
+		puts("erase block");
+		int i = REDUCE(q.x) + 128;
+		int j = REDUCE(q.y) + 128;
+		eraseBlock(i, j);
+	}
+
 }
 
 void middleClick(vec2 p, int down){
@@ -352,10 +374,14 @@ void pressG(){
 	//printf("pressed G (%d)\n", KEY_G);
 }
 
+void pressR(){
+	showRooms();
+}
+
 void pressKeypad(int n){
 	if(n==0) overlayMode = 0;
-	if(n==1) overlayMode = ATMOSPHERIC_EDGE_OVERLAY;
-	if(n==2) overlayMode = ROOM_BOUNDARY_OVERLAY;
+	if(n==1) { printf("atmo edge overlay\n"); overlayMode = ATMOSPHERIC_EDGE_OVERLAY; }
+	if(n==2) { printf("room boundary overlay\n"); overlayMode = ROOM_BOUNDARY_OVERLAY; }
 }
 
 
@@ -385,9 +411,8 @@ void dispatchInput(){
 
 
 	// keyboard
-	if(IsKeyPressed(KEY_G)){
-		pressG();
-	}
+	if(IsKeyPressed(KEY_G)){ pressG(); }
+	if(IsKeyPressed(KEY_R)){ pressR(); }
 
 	int c = 0;
 	while((c = GetCharPressed())){
@@ -621,9 +646,23 @@ void renderPressureOverlay(){
 
 
 void drawObject(struct Object *obj){
-	drawBall(obj->pos, 4, RED);
+	double r = 4;
+
+	drawSolidBlock(10,10,RED);
+	drawSolidBlock(10,12,RED);
+	drawSolidBlock(10,14,RED);
+	drawSolidBlock(12,10,RED);
+
+	struct CellWindow win = discFootprint(obj->pos, r);
+	printf("win = %d %d %d %d\n", win.imin, win.imax, win.jmin, win.jmax);
+	for(int i=win.imin; i<=win.imax; i++){
+	for(int j=win.jmin; j<=win.jmax; j++){
+		drawSolidBlock(i,j,BLUE);
+	}
+	}
 	//vec2 offset = {4, -4};
 	//drawLabel(add(offset, d->pos), d->label);
+	drawBall(obj->pos, r, RED);
 }
 
 
@@ -685,7 +724,7 @@ void rerenderEverything(){
 
 
 	//renderPressureOverlay();
-	//renderRoomOverlay();
+	renderRoomOverlay();
 	if(overlayMode > 0) renderEdgeOverlay(overlayMode);
 
 	EndDrawing();

@@ -110,12 +110,26 @@ double perpendicularDistanceSigned(vec2 p, vec2 a, vec2 b){
 }
 
 
+typedef struct {
+	int i;
+	int j;
+} int2;
+
+
+
+
 void physObject(struct Object *obj){
 	vec2 jump = scale(1/60.0, obj->vel);
-	vec2 wallA = {-16 * 3.999, 8};
+	vec2 wallA = {-16 * 16.999, 8};
 	vec2 wallB = {16 * 4.001, 8};
 
 	clearClipResults();
+
+	// enumerate the cells this object occupies during its path from obj->pos to obj->pos + jump
+
+	// for each cell obj covers, test each wall segment for clipping
+
+
 
 	struct ClipResult cr;
 	cr = clip(obj->pos, jump, 4, wallA, wallB);  if(cr.fraction < 1.0) addClipResult(cr);
@@ -140,6 +154,10 @@ void physObject(struct Object *obj){
 		printf("speed before = %lf\n", norm(obj->vel));
 		printf("v before = %lf %lf\n", obj->vel.x, obj->vel.y);
 		obj->vel = reflection(obj->vel, surf);
+
+		double lossfactor = 0.9;
+		obj->vel = scale(lossfactor, obj->vel);
+
 		printf("speed after = %lf\n", norm(obj->vel));
 		printf("v after = %lf %lf\n", obj->vel.x, obj->vel.y);
 	}
@@ -153,7 +171,7 @@ void physObject(struct Object *obj){
 void addObject(){
 	struct Object *obj = objects_ptr++;
 	obj->pos = vec2(-16 * 4, 64);
-	obj->vel = vec2(0,0);
+	obj->vel = vec2(50,100);
 }
 
 /* run physics for 1 step */

@@ -2,6 +2,7 @@
 
 #include <stdlib.h>
 #include <stdio.h>
+#include <linear.h>
 #include <renderer.h>
 #include <physics.h>
 #include <loader.h>

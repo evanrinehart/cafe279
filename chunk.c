@@ -3,6 +3,7 @@
 
 #include <math.h>
 
+#include <linear.h>
 #include <chunk.h>
 
 #include <floodfill.h>
@@ -10,15 +11,97 @@
 struct Chunk chunk;
 
 struct Room rooms[MAX_ROOMS];
-int room_counter = 2;
+struct Room *rooms_ptr = rooms;
+struct Room *rooms_end = rooms + MAX_ROOMS;
 
-// rooms
-#define LOOP256(I,J,X) \
-	for(int J = 0; J < 256; J++){ \
-		for(int I = 0; I < 256; I++){ \
-			do{ X; } while(0); \
-		} \
+int highest_room_id = 1;
+
+#define LOOP256(I,J) \
+	for(int I = 0; I < 256; I++) \
+		for(int J = 0; J < 256; J++)
+
+void refreshRoomEdges(int i, int j);
+void refreshAtmoEdges(int i, int j);
+void addRoom(int id, int air, int volume);
+void deleteRoom(struct Room *room);
+int measureCavity(int i, int j);
+int measureRoom(int i, int j);
+
+int floodAtmosphere(int i, int j, void* u, int (*visit)(void*, int, int)){
+	return flood(i, j, chunk.atmo_edges_h, chunk.atmo_edges_v, u, visit);
+}
+
+int floodRoom(int i, int j, void* u, int (*visit)(void*, int, int)){
+	return flood(i, j, chunk.room_edges_h, chunk.room_edges_v, u, visit);
+}
+
+// right after generating map, initialize the rooms
+// only blocks will be defined
+void initializeRooms(){
+
+	chunk.outsideAirPerCell = 250;
+
+	rooms[0].id = 0; // room 0 is not a room, this is a placeholder
+	rooms[0].air = 0;
+	rooms[0].volume = 65535;
+	rooms[1].id = 1; // room 1 is special, outdoors
+	rooms[1].air = 0;
+	rooms[1].volume = 65535;
+
+	// initialize open spaces to room -1 to be filled in later
+	LOOP256(i, j) chunk.room[i][j] = chunk.block[i][j] ? 0 : -1;
+
+	// establish atmo edges so floodfill works.
+	LOOP256(i, j) refreshAtmoEdges(i,j);
+
+	// if -1 is found on the border flood it with 1 (outside)
+	int mark_as_outside(void* unused, int i, int j){ chunk.room[i][j] = 1; return 0; }
+
+	LOOP256(i, j) {
+		if ((i==0 || j==0 || i==255 || j==255) && chunk.room[i][j] == -1) {
+			floodAtmosphere(i, j, NULL, mark_as_outside);
+		}
 	}
+
+	int mark_as_room_id(void* unused, int i, int j){ chunk.room[i][j] = highest_room_id; return 0; }
+
+	// if -1 is found now, it's inside, make it a room
+	LOOP256(i, j) {
+		if(chunk.room[i][j] == -1){
+			highest_room_id++;
+			int volume = measureCavity(i,j);
+			floodAtmosphere(i, j, NULL, mark_as_room_id);
+			addRoom(highest_room_id, 0, volume);
+		}
+	}
+
+	// all rooms identified, establish room boundaries
+	LOOP256(i, j) refreshRoomEdges(i,j);
+}
+
+void initializeOutdoorsOnly(){
+
+	chunk.outsideAirPerCell = 250;
+
+	rooms[0].id = 0; // room 0 is not a room, this is a placeholder
+	rooms[0].air = 0;
+	rooms[0].volume = 65535;
+	rooms[1].id = 1; // room 1 is special, outdoors
+	rooms[1].air = 0;
+	rooms[1].volume = 65535;
+
+	// initialize open spaces to room -1 to be filled in later
+	LOOP256(i, j) {
+		if(chunk.room[i][j] > 1) continue;
+		chunk.room[i][j] = chunk.block[i][j] ? 0 : 1;
+	}
+
+	// establish atmo edges so floodfill works.
+	LOOP256(i, j) refreshAtmoEdges(i,j);
+
+	// all rooms identified, establish room boundaries
+	LOOP256(i, j) refreshRoomEdges(i,j);
+}
 
 void refreshRoomEdges(int i, int j){
 	int r = chunk.room[i][j];
@@ -28,12 +111,12 @@ void refreshRoomEdges(int i, int j){
 	int r3 = j < 255 ? chunk.room[i][j+1] : 0;
 
 	if(i < 255) chunk.room_edges_v[i+1][j] = r != r0;
-	chunk.room_edges_h[i][j] =   r != r1;
-	chunk.room_edges_v[i][j] =   r != r2;
+	chunk.room_edges_h[i][j] = r != r1;
+	chunk.room_edges_v[i][j] = r != r2;
 	if(j < 255) chunk.room_edges_h[i][j+1] = r != r3;
 }
 
-void refreshAtmoEdge(int i, int j){
+void refreshAtmoEdges(int i, int j){
 	int here = !!chunk.block[i][j];
 
 	if(i > 0){
@@ -47,26 +130,27 @@ void refreshAtmoEdge(int i, int j){
 	}
 }
 
+// cell "is outside" if it can reach the world boundary
+int outside_test_visitor(void* u, int i, int j){ return i == 0 || j == 0 || i == 255 || j == 255; }
+int isOutside(int i, int j){ return floodAtmosphere(i, j, NULL, outside_test_visitor); }
 
-int outside_test_visitor(void* u, int i, int j){
-	return i == 0 || j == 0 || i == 255 || j == 255;
+// Volume measuring, respect room boundary or not
+int volume_counter;
+
+int counting_visitor(void* u, int i, int j){ volume_counter++; return 0; }
+
+int measureCavity(int i, int j){
+	volume_counter = 0;
+	floodAtmosphere(i, j, NULL, counting_visitor);
+	return volume_counter;
 }
 
-int isOutside(int i, int j){
-	return flood(i, j, chunk.atmo_edges_h, chunk.atmo_edges_v, NULL, outside_test_visitor);
+int measureRoom(int i, int j){
+	volume_counter = 0;
+	floodRoom(i, j, NULL, counting_visitor);
+	return volume_counter;
 }
 
-int counting_visitor(void* u, int i, int j){
-	int *c = u;
-	(*c)++;
-	return 0;
-}
-
-int measureVolume(int i, int j){
-	int counter = 0;
-	flood(i, j, chunk.room_edges_h, chunk.room_edges_v, &counter, counting_visitor);
-	return counter;
-}
 
 void addAtmoBlockEdges(int i, int j){
 	if(i==0 || j==0 || i==255 || j==255) goto alert1;
@@ -110,49 +194,19 @@ double computeRoomPressure(int r, int volumeAdjust){
 	return 0;
 }
 
-int roomExists(int r){
-	LOOP256(i,j, if(chunk.room[i][j] == r) return 1;)
-	return 0;
-}
-
 void showRooms(){
-	printf("%10s %10s %10s %10s\n", "id", "air", "volume", "pressure");
-	for(int i = 1; i < room_counter; i++){
-		struct Room * ptr = &rooms[i];
-		if(i == 1){
-			printf("%10d %10d %10d %10.4f\n", ptr->id, ptr->air, ptr->volume, (float)chunk.outsideAirPerCell);
-		}
-		else if(i > 1 && roomExists(i)){
-			printf("%10d %10d %10d %10.4f\n", ptr->id, ptr->air, ptr->volume, 1.0*ptr->air/ptr->volume);
-		}
+	int i = 0;
+	printf("%10s %10s %10s %12s %10s\n", "id", "air", "volume", "pressure", "note");
+	printf("%10d %10s %10s %12s\n", 0, "-", "-", "-");
+	printf("%10d %10s %10s %12.4f %10s\n", 1, "a lot", "-", 1.0*chunk.outsideAirPerCell, "outside");
+
+	for(struct Room *ptr = rooms; ptr < rooms_ptr; ptr++, i++){
+		printf("%10d %10d %10d %12.4f\n", ptr->id, ptr->air, ptr->volume, 1.0*ptr->air/ptr->volume);
 	}
 }
 
 void findRoomCell(int r, int *ri, int *rj){
-	LOOP256(i,j, if(chunk.room[i][j] == r){ *ri = i; *rj = j; })
-}
-
-void updateRoomVolume(int i, int j){
-	int r = chunk.room[i][j];
-	if(r > 0) rooms[r].volume = measureVolume(i, j);
-}
-
-struct Room * createNewRoom(int i, int j, int air, int volume){
-	if(room_counter == MAX_ROOMS) return NULL;
-
-printf("DING new room (%d) created at %d %d\n", room_counter, i, j);
-
-	int k = room_counter++;
-
-	struct Room *ptr = &rooms[k];
-	ptr->id = k;
-	ptr->volume = volume;
-	ptr->air = air;
-
-	//floodfill(i, j, k, chunk.room);
-	chunk.room[i][j] = k;
-
-	return ptr;
+	LOOP256(i,j) {if(chunk.room[i][j] == r){ *ri = i; *rj = j; }};
 }
 
 
@@ -200,69 +254,8 @@ void mergeTwoRooms(int r1, int r2){
 */
 
 
-void initializeRooms(){
 
-	chunk.outsideAirPerCell = 250;
-
-	rooms[0].id = 0;
-	rooms[0].air = 0;
-	rooms[0].volume = 65535;
-	rooms[1].id = 1;
-	rooms[1].air = 0;
-	rooms[1].volume = 65535;
-
-	// legacy load from db
-	LOOP256(i, j,
-		if(chunk.block[i][j]){
-			//chunk.block[i][j] = 1;
-			chunk.room[i][j] = 0;
-		}
-		else{
-			//chunk.block[i][j] = 0;
-			chunk.room[i][j] = 1;
-		}
-	);
-
-	LOOP256(i, j, refreshRoomEdges(i,j));
-	LOOP256(i, j, refreshAtmoEdge(i,j));
-
-/*
-	LOOP256(i, j,
-		paper[i][j]      = chunk.block[i][j] ? -127 : 0;
-		badoutside[i][j] = paper[i][j];
-		chunk.room[i][j] = chunk.block[i][j] ? 0 : -1;
-	)
-
-	LOOP256(i, j,
-		if(i==0 || j==0 || i==255 || j==255){
-			if(chunk.room[i][j] == -1){
-				floodfill(i, j, 1, chunk.room);
-			}
-		}
-	)
-
-	LOOP256(i, j,
-		if(chunk.room[i][j] == -1){
-			int volume = floodvolume(i,j,chunk.room);
-			createNewRoom(i, j, 0, volume); // eventually load air from save
-		}
-	)
-*/
-}
-
-
-int canGoEast(int i, int j) { return chunk.atmo_edges_v[i+1][j] == 0; }
-int canGoSouth(int i, int j){ return chunk.atmo_edges_h[i][j] == 0; }
-int canGoWest(int i, int j) { return chunk.atmo_edges_v[i][j] == 0; }
-int canGoNorth(int i, int j){ return chunk.atmo_edges_h[i][j+1] == 0; }
-
-int accessibleAdjacentRoom(int i,int j){
-	if(canGoEast(i,j)) return chunk.room[i+1][j];
-	if(canGoSouth(i,j)) return chunk.room[i][j-1];
-	if(canGoWest(i,j)) return chunk.room[i-1][j];
-	if(canGoNorth(i,j)) return chunk.room[i][j+1];
-	return 0;
-}
+/* chunk routines 2.0 */
 
 void addBlock(int i, int j){
 	chunk.block[i][j] = 1;
@@ -272,20 +265,107 @@ void addBlock(int i, int j){
 	refreshRoomEdges(i, j);
 }
 
-void deleteBlock(int i, int j){
-	chunk.block[i][j] = 0;
-	subAtmoBlockEdges(i, j);
-	//deleteTileAt(i-128,j-128); // legacy
+#define min(A,B) (A < B ? A : B)
+#define max(A,B) (A > B ? A : B)
 
-	int r = accessibleAdjacentRoom(i,j);
+struct CellWindow discFootprint(vec2 c, double r){
 
-	if(r){
-		chunk.room[i][j] = r;
-	}
-	else{
-		createNewRoom(i,j,0,1);
-	}
-		
-	refreshRoomEdges(i, j);
+	int i1 = REDUCE(c.x - r);
+	int i3 = REDUCE(c.x + r);
+	int j1 = REDUCE(c.y - r);
+	int j3 = REDUCE(c.y + r);
+
+	struct CellWindow w = {
+		.imin = min(i1,i3),
+		.imax = max(i1,i3),
+		.jmin = min(j1,j3),
+		.jmax = max(j1,j3)
+	};
+
+	return w;
 }
 
+struct Quad {
+	vec2 a;
+	vec2 b;
+	vec2 c;
+	vec2 d;
+};
+
+void cellCorners(int i, int j, vec2 corners[4]){
+	double half = CELL / 2;
+	vec2 center = {EXPAND(i), EXPAND(j)}; // "i is x, rows go vertical"
+	corners[0].x = center.x + half;
+	corners[0].y = center.y + half;
+	corners[1].x = center.x + half;
+	corners[1].y = center.y - half;
+	corners[2].x = center.x - half;
+	corners[2].y = center.y - half;
+	corners[3].x = center.x - half;
+	corners[3].y = center.y + half;
+}
+
+int neighboringRoom(int i, int j){
+	int r;
+	r = chunk.room[i+1][j]; if(r) return r;
+	r = chunk.room[i][j-1]; if(r) return r;
+	r = chunk.room[i-1][j]; if(r) return r;
+	r = chunk.room[i][j+1]; if(r) return r;
+	return 0;
+}
+
+void putBlock(int i, int j, int type){
+	if(chunk.block[i][j]) return;
+
+	chunk.block[i][j] = type;
+	chunk.room[i][j] = 0;
+
+	refreshRoomEdges(i,j);
+
+	chunk.atmo_edges_h[i][j]++;
+	chunk.atmo_edges_v[i][j]++;
+	chunk.atmo_edges_h[i][j+1]++;
+	chunk.atmo_edges_v[i+1][j]++;
+}
+
+void eraseBlock(int i, int j){
+	if(chunk.block[i][j] == 0) return;
+
+	chunk.block[i][j] = 0;
+	subAtmoBlockEdges(i, j);
+
+	int r = neighboringRoom(i,j);
+	if(r) chunk.room[i][j] = r;
+	else {
+		highest_room_id++;
+		chunk.room[i][j] = highest_room_id;
+		addRoom(highest_room_id, 0, 1);
+	}
+
+	refreshRoomEdges(i,j);
+}
+
+void addRoom(int id, int air, int volume){
+	if(id > highest_room_id) highest_room_id = id;
+	if(rooms_ptr == rooms_end) return;
+	struct Room room = { .id = id, .air = air, .volume = volume };
+	*rooms_ptr++ = room;
+	printf("DING new room created id=%d air=%d volume=%d\n", id, air, volume);
+}
+
+void deleteRoom(struct Room *room){
+	rooms_ptr--;
+	*room = *rooms_ptr;
+}
+
+struct Room * roomById(int id){
+	for(struct Room *ptr = rooms; ptr < rooms_end; ptr++){
+		if(ptr->id == id) return ptr;
+	}
+	return NULL;
+}
+
+int roomExists(int r){
+	LOOP256(i,j) { if(chunk.room[i][j] == r) return 1; }
+	return 0;
+}

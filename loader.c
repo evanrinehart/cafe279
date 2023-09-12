@@ -128,6 +128,21 @@ int loadMegaman(){
 	return 0;
 }
 
+int loadRoom(sqlite3_stmt *stmt){
+	int rid    = sqlite3_column_int(stmt,0);
+	int air    = sqlite3_column_int(stmt,1);
+	int volume = sqlite3_column_int(stmt,2);
+	addRoom(rid, air, volume);
+	return 0;
+}
+
+int loadRoomCell(sqlite3_stmt *stmt){
+	int rid  = sqlite3_column_int(stmt,0);
+	int i    = sqlite3_column_int(stmt,1);
+	int j    = sqlite3_column_int(stmt,2);
+	chunk.room[i][j] = rid;
+	return 0;
+}
 
 int loadBlock(sqlite3_stmt *stmt){
 	int i = sqlite3_column_int(stmt,0);
@@ -153,6 +168,32 @@ int saveBlocks(sqlite3 *db, sqlite3_stmt* stmt){
 	}
 	return 0;
 }
+
+int saveRooms(sqlite3 *db, sqlite3_stmt* stmt){
+	for(struct Room *r = rooms; r < rooms_ptr; r++){
+		sqlite3_reset(stmt);
+		sqlite3_bind_int(stmt, 1, r->id);
+		sqlite3_bind_int(stmt, 2, r->air);
+		sqlite3_bind_int(stmt, 3, r->volume);
+		sqlite3_step(stmt);
+	}
+	return 0;
+}
+
+int saveRoomCells(sqlite3 *db, sqlite3_stmt* stmt){
+	for(int i = 0; i < 256; i++){
+	for(int j = 0; j < 256; j++){
+		int rid = chunk.room[i][j];
+		if(rid == 0 || rid == 1) continue;
+		sqlite3_reset(stmt);
+		sqlite3_bind_int(stmt, 1, rid);
+		sqlite3_bind_int(stmt, 2, i);
+		sqlite3_bind_int(stmt, 3, j);
+		sqlite3_step(stmt);
+	}}
+	return 0;
+}
+
 
 int loadDoodad(sqlite3_stmt *stmt){
 	struct Doodad d;
@@ -182,6 +223,8 @@ int saveDoodads(sqlite3 *db, sqlite3_stmt* stmt){
 int loadWorkspaceDb(sqlite3 *db){
 	TRY_EACHROW(db, "SELECT * FROM doodads;", loadDoodad);
 	TRY_EACHROW(db, "SELECT * FROM blocks;", loadBlock);
+	TRY_EACHROW(db, "SELECT * FROM rooms;", loadRoom);
+	TRY_EACHROW(db, "SELECT * FROM room_cells;", loadRoomCell);
 	return 0;
 }
 
@@ -200,11 +243,14 @@ int loadWorkspace(FILE* logfile, const char* savename){
 int saveWorkspaceToDb(sqlite3 *db){
 	TRY_EXEC(db, "CREATE TABLE doodads(serial_no int, pos_x real, pos_y real, label text, symbol text);");
 	TRY_EXEC(db, "CREATE TABLE blocks(i int, j int, tile int);");
-	TRY_EXEC(db, "CREATE TABLE widgets(name text, pos_x real, pos_y real);");
+	TRY_EXEC(db, "CREATE TABLE rooms(id int, air int, volume int);");
+	TRY_EXEC(db, "CREATE TABLE room_cells(id int, i int, j int);");
 	TRY_EXEC(db, "BEGIN TRANSACTION;");
 
 	TRY_STMT(db, "INSERT INTO doodads VALUES (?,?,?,?,?);", saveDoodads);
 	TRY_STMT(db, "INSERT INTO blocks VALUES (?,?,?);", saveBlocks);
+	TRY_STMT(db, "INSERT INTO rooms VALUES (?,?,?);", saveRooms);
+	TRY_STMT(db, "INSERT INTO room_cells VALUES (?,?,?);", saveRoomCells);
 
 	TRY_EXEC(db, "COMMIT;");
 	return 0;
