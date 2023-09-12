@@ -285,22 +285,28 @@ struct CellWindow discFootprint(vec2 c, double r){
 	return w;
 }
 
-struct Quad {
-	vec2 a;
-	vec2 b;
-	vec2 c;
-	vec2 d;
-};
+struct CellWindow unionCellWindow(struct CellWindow w1, struct CellWindow w2){
+	struct CellWindow w3 = {
+		min(w1.imin, w2.imin),
+		max(w1.imax, w2.imax),
+		min(w1.jmin, w2.jmin),
+		max(w1.jmax, w2.jmax)
+	};
+	return w3;
+}
 
 void cellCorners(int i, int j, vec2 corners[4]){
 	double half = CELL / 2;
 	vec2 center = {EXPAND(i), EXPAND(j)}; // "i is x, rows go vertical"
 	corners[0].x = center.x + half;
 	corners[0].y = center.y + half;
+
 	corners[1].x = center.x + half;
 	corners[1].y = center.y - half;
+
 	corners[2].x = center.x - half;
 	corners[2].y = center.y - half;
+
 	corners[3].x = center.x - half;
 	corners[3].y = center.y + half;
 }

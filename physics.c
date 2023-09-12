@@ -4,6 +4,8 @@
 #include <doodad.h>
 #include <physics.h>
 
+#include <chunk.h>
+
 #include <math.h>
 
 #define PI M_PI
@@ -24,7 +26,7 @@ struct ClipResult *clipResults_ptr = clipResults;
 struct ClipResult *clipResults_end = clipResults + 64;
 
 void addClipResult(struct ClipResult cr){
-	*clipResults_ptr++ = cr;
+	if(cr.fraction < 1.0) *clipResults_ptr++ = cr;
 }
 
 void clearClipResults(){
@@ -39,7 +41,7 @@ struct ClipResult minimumClipResult(){
 	return cr;
 }
 
-vec2 a = {0, -36};
+vec2 acceleration = {0, -100};
 
 struct ClipResult endclip(vec2 c, vec2 cjump, double r, vec2 endp){
 	vec2 p = sub(endp, c);
@@ -120,50 +122,53 @@ typedef struct {
 
 void physObject(struct Object *obj){
 	vec2 jump = scale(1/60.0, obj->vel);
-	vec2 wallA = {-16 * 16.999, 8};
-	vec2 wallB = {16 * 4.001, 8};
+	vec2 a = obj->pos;
+	vec2 b = add(a, jump);
+
+	double radius = 4;
+
+	// for slow speeds, testing destination footprint is enough
+	// for fast speeds, testing union of start and end works better
+	struct CellWindow winA = discFootprint(a, radius);
+	struct CellWindow winB = discFootprint(b, radius);
+	struct CellWindow win = unionCellWindow(winA,winB);
+	struct ClipResult cr;
 
 	clearClipResults();
 
-	// enumerate the cells this object occupies during its path from obj->pos to obj->pos + jump
+	for(int i = win.imin; i <= win.imax; i++){
+	for(int j = win.jmin; j <= win.jmax; j++){
+		if(chunk.block[i+128][j+128] == 0) continue;
+		vec2 corners[4];
+		cellCorners(i,j,corners);
 
-	// for each cell obj covers, test each wall segment for clipping
+		cr = clip(a, jump, radius, corners[0], corners[1]); addClipResult(cr);
+		cr = clip(a, jump, radius, corners[1], corners[2]); addClipResult(cr);
+		cr = clip(a, jump, radius, corners[2], corners[3]); addClipResult(cr);
+		cr = clip(a, jump, radius, corners[3], corners[0]); addClipResult(cr);
 
-
-
-	struct ClipResult cr;
-	cr = clip(obj->pos, jump, 4, wallA, wallB);  if(cr.fraction < 1.0) addClipResult(cr);
-//printf("test1 = %lf\n", cr.fraction);
-	cr = endclip(obj->pos, jump, 4, wallA); if(cr.fraction < 1.0) addClipResult(cr);
-//printf("test2 = %lf\n", cr.fraction);
-	cr = endclip(obj->pos, jump, 4, wallB); if(cr.fraction < 1.0) addClipResult(cr);
-//printf("test3 = %lf\n", cr.fraction);
+		cr = endclip(a, jump, radius, corners[0]); addClipResult(cr);
+		cr = endclip(a, jump, radius, corners[1]); addClipResult(cr);
+		cr = endclip(a, jump, radius, corners[2]); addClipResult(cr);
+		cr = endclip(a, jump, radius, corners[3]); addClipResult(cr);
+	}}
 
 	cr = minimumClipResult();
-//printf("fraction = %lf\n", cr.fraction);
-	if(cr.fraction < 1.0){
+
+	if (cr.fraction < 1.0) {
 		vec2 newpos = add(obj->pos, scale(cr.fraction, jump));
-//printf("newpos = %lf %lf\n", newpos.x, newpos.y);
 		vec2 hit = cr.hitpoint;
-//printf("hit = %lf %lf\n", hit.x, hit.y);
 		vec2 rad = sub(newpos, hit);
-//printf("rad = %lf %lf\n", rad.x, rad.y);
 		vec2 surf = rotate(rad, -PI/2);
-//printf("surf = %lf %lf\n", surf.x, surf.y);
 		obj->pos = newpos;
-		printf("speed before = %lf\n", norm(obj->vel));
-		printf("v before = %lf %lf\n", obj->vel.x, obj->vel.y);
 		obj->vel = reflection(obj->vel, surf);
 
-		double lossfactor = 0.9;
+		double lossfactor = 0.25;
 		obj->vel = scale(lossfactor, obj->vel);
-
-		printf("speed after = %lf\n", norm(obj->vel));
-		printf("v after = %lf %lf\n", obj->vel.x, obj->vel.y);
 	}
-	else{
-		obj->pos = add(obj->pos, jump);
-		obj->vel = add(obj->vel, scale(1/60.0, a));
+	else {
+		obj->pos = b;
+		obj->vel = add(obj->vel, scale(1/60.0, acceleration));
 	}
 
 }

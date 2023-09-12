@@ -58,6 +58,7 @@ void initializeRooms(void);
 void initializeOutdoorsOnly(void);
 
 struct CellWindow discFootprint(vec2 c, double r);
+struct CellWindow unionCellWindow(struct CellWindow w1, struct CellWindow w2);
 void cellCorners(int i, int j, vec2 corners[4]);
 
 void putBlock(int i, int j, int type);

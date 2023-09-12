@@ -648,16 +648,16 @@ void renderPressureOverlay(){
 void drawObject(struct Object *obj){
 	double r = 4;
 
-	drawSolidBlock(10,10,RED);
-	drawSolidBlock(10,12,RED);
-	drawSolidBlock(10,14,RED);
-	drawSolidBlock(12,10,RED);
+	//drawSolidBlock(10,10,RED);
+	//drawSolidBlock(10,12,RED);
+	//drawSolidBlock(10,14,RED);
+	//drawSolidBlock(12,10,RED);
 
 	struct CellWindow win = discFootprint(obj->pos, r);
-	printf("win = %d %d %d %d\n", win.imin, win.imax, win.jmin, win.jmax);
+	//printf("win = %d %d %d %d\n", win.imin, win.imax, win.jmin, win.jmax);
 	for(int i=win.imin; i<=win.imax; i++){
 	for(int j=win.jmin; j<=win.jmax; j++){
-		drawSolidBlock(i,j,BLUE);
+		//drawSolidBlock(i,j,BLUE);
 	}
 	}
 	//vec2 offset = {4, -4};
