@@ -11,7 +11,7 @@
 
 struct Engine engine;
 
-#define WORKSPACE "workspace.save"
+#define WORKSPACE "workspace.db"
 
 int main(int argc, char* argv[]){
 
