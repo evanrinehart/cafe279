@@ -14,7 +14,6 @@ CFLAGS = \
 LIBS = -lGL -lm -lpthread -lrt -lX11
 
 OBJECTS = \
-	symbols.o \
 	linear.o \
 	loader.o \
 	renderer.o \
@@ -30,25 +29,17 @@ $(EXE_NAME) : $(OBJECTS) main.o sqlite3.o libraylib.a
 
 # implicit rules and compile action for .c files used here
 main.o : engine.h renderer.h physics.h loader.h bsod.h
-renderer.o : raylib.h renderer.h symbols.h linear.h bsod.h doodad.h chunk.h megaman.h
-physics.o : doodad.h symbols.h chunk.h linear.h
-loader.o : loader.h symbols.h linear.h sqlite3.h
-doodad.o : doodad.h symbols.h linear.h
+renderer.o : raylib.h renderer.h linear.h bsod.h doodad.h chunk.h megaman.h
+physics.o : doodad.h chunk.h linear.h
+loader.o : loader.h linear.h doodad.h chunk.h sqlite3.h
+doodad.o : doodad.h linear.h
 chunk.o : chunk.h floodfill.h
-symbols.o : symbols.h
 linear.o : linear.h
 bresenham.o : bresenham.h
 floodfill.o : floodfill.h
 
 # define a custom pattern rule to compile D files in the same way C files are
 #%.o : %.d ; $(DC) -fno-druntime -c $<
-
-# symbols.c,h are generated from a text file
-symbols.c symbols.h &: tools/gensym symbols.def
-	tools/gensym symbols.def
-
-tools/gensym : gensym.c
-	gcc -Wall -Werror -o tools/gensym gensym.c
 
 RAYLIB_VERSION = master
 RAYLIB_PATH = vendor/raylib/src
@@ -87,8 +78,6 @@ sqlite3.o : sqlite3.c
 clean :
 	rm -f $(EXE_NAME) main.o $(OBJECTS)
 	rm -f raylib.h rlgl.h libraylib.a
-	rm -f tools/gensym
-	rm -f symbols.c symbols.h
 
 distclean : clean
 	rm -f sqlite3.c sqlite3.h

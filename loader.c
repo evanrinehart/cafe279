@@ -7,7 +7,6 @@
 #include <sqlite3.h>
 
 #include <linear.h>
-#include <symbols.h>
 
 #include <doodad.h>
 #include <megaman.h>
@@ -211,7 +210,7 @@ int loadDoodad(sqlite3_stmt *stmt){
 }
 
 int saveDoodads(sqlite3 *db, sqlite3_stmt* stmt){
-	for(struct Doodad *d = doodads; d < doodad_ptr; d++){
+	for(struct Doodad *d = doodads; d < doodads_ptr; d++){
 		sqlite3_reset(stmt);
 		sqlite3_bind_int(stmt,    1, d->serial_no);
 		sqlite3_bind_double(stmt, 2, d->pos.x);

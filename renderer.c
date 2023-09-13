@@ -15,7 +15,6 @@
 #include <raylib.h>
 
 #include <linear.h>
-#include <symbols.h>
 
 #include <doodad.h>
 #include <megaman.h>
@@ -48,6 +47,10 @@ void drawSpriteBase(Texture tex, vec2 p, int flip);
 
 void drawMegaman(vec2 p, int flip);
 
+enum Overlay {
+	ATMOSPHERIC_EDGE_OVERLAY,
+	ROOM_BOUNDARY_OVERLAY
+};
 
 extern struct Screen {
 	int w;
@@ -369,6 +372,8 @@ void pressG(){
 
 void pressR(){
 	showRooms();
+
+	for(struct Doodad *d = doodads; d < doodads_ptr; d++) printDoodad(d);
 }
 
 void pressKeypad(int n){
@@ -497,7 +502,7 @@ void renderTiles(){
 }
 
 
-void renderEdgeOverlay(enum Symbol mode){
+void renderEdgeOverlay(enum Overlay mode){
 	double xmin, xmax, ymin, ymax;
 
 	getViewBounds(&xmin, &xmax, &ymin, &ymax);
@@ -624,11 +629,11 @@ void drawDoodad(struct Doodad *d){
 	Color c;
 	switch(d->symbol){
 		case NULL_SYMBOL:              c = BLACK; break;
-		case ATMOSPHERIC_EDGE_OVERLAY: c = MAGENTA; break;
-		case ROOM_BOUNDARY_OVERLAY:    c = SKYBLUE; break;
-		case PHYSICS_FREEFALL:         c = DARKGREEN; break;
-		case PHYSICS_IDLE:             c = GOLD; break;
-		//case SYM5:                     c = MAROON; break;
+		case NEPTUNE_SYMBOL:           c = MAGENTA; break;
+		case MOON_SYMBOL:              c = SKYBLUE; break;
+		case SUN_SYMBOL:               c = DARKGREEN; break;
+		case SATURN_SYMBOL:            c = GOLD; break;
+		case GALAXY_SYMBOL:            c = MAROON; break;
 		default:                       c = ORANGE;
 
 	}

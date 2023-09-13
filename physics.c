@@ -1,5 +1,4 @@
 #include <stdio.h>
-#include <symbols.h>
 #include <linear.h>
 #include <doodad.h>
 #include <physics.h>
@@ -181,7 +180,7 @@ void physics(){
 		physObject(obj);
 	}
 
-	for(struct Doodad *d = doodads; d < doodad_ptr; d++){
+	for(struct Doodad *d = doodads; d < doodads_ptr; d++){
 		updateDoodad(d);
 	}
 
