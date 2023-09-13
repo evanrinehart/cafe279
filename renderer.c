@@ -302,8 +302,7 @@ void drawUISprite(Texture tex, double x, double y, double zoom){
 /* Controller */
 
 void initializeEverything(){
-	//initializeRooms();
-	initializeOutdoorsOnly();
+	finishChunkLoading();
 }
 
 // raw action routines... master controller
@@ -337,27 +336,25 @@ void leftClick(vec2 p, int down){
 	}
 }
 
-void rightClick(vec2 p, int down){
+void rightClick(vec2 mouse, int down){
 	mouse_buttons[1] = down;
 
-	vec2 q = screenToWorld(p.x, p.y);
+	vec2 p = screenToWorld(mouse.x, mouse.y);
 
 	if(down && tool == BLOCK_EDIT_TOOL){
 		puts("erase block");
-		int i = REDUCE(q.x) + 128;
-		int j = REDUCE(q.y) + 128;
+		int i = REDUCE(p.x) + 128;
+		int j = REDUCE(p.y) + 128;
 		eraseBlock(i, j);
 	}
 
 }
 
-void middleClick(vec2 p, int down){
+void middleClick(vec2 mouse, int down){
 	mouse_buttons[2] = down;
-
-	printf("mouse middle click %d\n", down);
 }
 
-void mouseWheel(vec2 p, double diff){
+void mouseWheel(vec2 mouse, double diff){
 	if(diff < 0) zoom /= 2;
 	if(diff > 0) zoom *= 2;
 }

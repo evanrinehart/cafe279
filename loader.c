@@ -131,7 +131,8 @@ int loadMegaman(){
 int loadRoom(sqlite3_stmt *stmt){
 	int rid    = sqlite3_column_int(stmt,0);
 	int air    = sqlite3_column_int(stmt,1);
-	int volume = sqlite3_column_int(stmt,2);
+	int volume = 0; // measure the volume later
+	//int volume = sqlite3_column_int(stmt,2);
 	addRoom(rid, air, volume);
 	return 0;
 }
@@ -171,10 +172,13 @@ int saveBlocks(sqlite3 *db, sqlite3_stmt* stmt){
 
 int saveRooms(sqlite3 *db, sqlite3_stmt* stmt){
 	for(struct Room *r = rooms; r < rooms_ptr; r++){
+		if(r->id == 0) continue;
+		if(r->id == 1) continue;
+		if(!roomExists(r->id, NULL, NULL)) continue;
 		sqlite3_reset(stmt);
 		sqlite3_bind_int(stmt, 1, r->id);
 		sqlite3_bind_int(stmt, 2, r->air);
-		sqlite3_bind_int(stmt, 3, r->volume);
+		//sqlite3_bind_int(stmt, 3, r->volume);
 		sqlite3_step(stmt);
 	}
 	return 0;
@@ -243,13 +247,13 @@ int loadWorkspace(FILE* logfile, const char* savename){
 int saveWorkspaceToDb(sqlite3 *db){
 	TRY_EXEC(db, "CREATE TABLE doodads(serial_no int, pos_x real, pos_y real, label text, symbol text);");
 	TRY_EXEC(db, "CREATE TABLE blocks(i int, j int, tile int);");
-	TRY_EXEC(db, "CREATE TABLE rooms(id int, air int, volume int);");
+	TRY_EXEC(db, "CREATE TABLE rooms(id int, air int);");
 	TRY_EXEC(db, "CREATE TABLE room_cells(id int, i int, j int);");
 	TRY_EXEC(db, "BEGIN TRANSACTION;");
 
 	TRY_STMT(db, "INSERT INTO doodads VALUES (?,?,?,?,?);", saveDoodads);
 	TRY_STMT(db, "INSERT INTO blocks VALUES (?,?,?);", saveBlocks);
-	TRY_STMT(db, "INSERT INTO rooms VALUES (?,?,?);", saveRooms);
+	TRY_STMT(db, "INSERT INTO rooms VALUES (?,?);", saveRooms);
 	TRY_STMT(db, "INSERT INTO room_cells VALUES (?,?,?);", saveRoomCells);
 
 	TRY_EXEC(db, "COMMIT;");

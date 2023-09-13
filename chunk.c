@@ -8,6 +8,8 @@
 
 #include <floodfill.h>
 
+#include <bsod.h>
+
 struct Chunk chunk;
 
 struct Room rooms[MAX_ROOMS];
@@ -39,14 +41,11 @@ int floodRoom(int i, int j, void* u, int (*visit)(void*, int, int)){
 // only blocks will be defined
 void initializeRooms(){
 
+	return; // this is disabled for now, just load the rooms from workspace file
+
 	chunk.outsideAirPerCell = 250;
 
-	rooms[0].id = 0; // room 0 is not a room, this is a placeholder
-	rooms[0].air = 0;
-	rooms[0].volume = 65535;
-	rooms[1].id = 1; // room 1 is special, outdoors
-	rooms[1].air = 0;
-	rooms[1].volume = 65535;
+	highest_room_id = 1;
 
 	// initialize open spaces to room -1 to be filled in later
 	LOOP256(i, j) chunk.room[i][j] = chunk.block[i][j] ? 0 : -1;
@@ -79,21 +78,16 @@ void initializeRooms(){
 	LOOP256(i, j) refreshRoomEdges(i,j);
 }
 
-void initializeOutdoorsOnly(){
+void finishChunkLoading(){
+
+	// loader has produced blocks, rooms
+	// still missing the outdoor cells, room volumes
 
 	chunk.outsideAirPerCell = 250;
 
-	rooms[0].id = 0; // room 0 is not a room, this is a placeholder
-	rooms[0].air = 0;
-	rooms[0].volume = 65535;
-	rooms[1].id = 1; // room 1 is special, outdoors
-	rooms[1].air = 0;
-	rooms[1].volume = 65535;
-
-	// initialize open spaces to room -1 to be filled in later
 	LOOP256(i, j) {
-		if(chunk.room[i][j] > 1) continue;
-		chunk.room[i][j] = chunk.block[i][j] ? 0 : 1;
+		// zero might mean it's a wall, or outdoors which was not saved or loaded
+		if(chunk.room[i][j] == 0) chunk.room[i][j] = chunk.block[i][j] ? 0 : 1;
 	}
 
 	// establish atmo edges so floodfill works.
@@ -101,6 +95,11 @@ void initializeOutdoorsOnly(){
 
 	// all rooms identified, establish room boundaries
 	LOOP256(i, j) refreshRoomEdges(i,j);
+
+	for(struct Room *room = rooms; room < rooms_ptr; room++){
+		int i, j;
+		if (roomExists(room->id, &i, &j)) room->volume = measureRoom(i,j);
+	}
 }
 
 void refreshRoomEdges(int i, int j){
@@ -320,8 +319,31 @@ int neighboringRoom(int i, int j){
 	return 0;
 }
 
+void shrinkRoom(int rid){
+	if(rid <= 1) return;
+
+	struct Room *room = roomById(rid);
+	if(room == NULL) bsod("sR room not found");
+
+	if(room->volume == 1) deleteRoom(room);
+	else room->volume--;
+}
+
+void growRoom(int rid){
+	if(rid <= 1) return;
+
+	struct Room *room = roomById(rid);
+	if(room == NULL) bsod("gR room not found");
+
+	room->volume++;
+}
+
 void putBlock(int i, int j, int type){
 	if(chunk.block[i][j]) return;
+
+	int rid = chunk.room[i][j];
+
+	shrinkRoom(rid);
 
 	chunk.block[i][j] = type;
 	chunk.room[i][j] = 0;
@@ -340,8 +362,11 @@ void eraseBlock(int i, int j){
 	chunk.block[i][j] = 0;
 	subAtmoBlockEdges(i, j);
 
-	int r = neighboringRoom(i,j);
-	if(r) chunk.room[i][j] = r;
+	int rid = neighboringRoom(i,j);
+	if(rid) {
+		chunk.room[i][j] = rid;
+		growRoom(rid);
+	}
 	else {
 		highest_room_id++;
 		chunk.room[i][j] = highest_room_id;
@@ -371,7 +396,13 @@ struct Room * roomById(int id){
 	return NULL;
 }
 
-int roomExists(int r){
-	LOOP256(i,j) { if(chunk.room[i][j] == r) return 1; }
+int roomExists(int rid, int *outi, int *outj){
+	LOOP256(i,j) {
+		if(chunk.room[i][j] == rid) {
+			if(outi) *outi = i;
+			if(outj) *outj = j;
+			return 1;
+		}
+	}
 	return 0;
 }

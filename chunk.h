@@ -50,12 +50,12 @@ extern struct Chunk chunk;
 
 void addAtmoBlockEdges(int i, int j);
 void subAtmoBlockEdges(int i, int j);
-int roomExists(int r);
+int roomExists(int rid, int *outi, int *outj);
 void refreshRoomEdges(int i, int j);
 
 void showRooms(void);
 void initializeRooms(void);
-void initializeOutdoorsOnly(void);
+void finishChunkLoading(void);
 
 struct CellWindow discFootprint(vec2 c, double r);
 struct CellWindow unionCellWindow(struct CellWindow w1, struct CellWindow w2);
