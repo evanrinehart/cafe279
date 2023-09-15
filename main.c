@@ -2,18 +2,22 @@
 
 #include <stdlib.h>
 #include <stdio.h>
+
 #include <linear.h>
 #include <renderer.h>
 #include <physics.h>
 #include <loader.h>
 #include <engine.h>
 #include <bsod.h>
+#include <clocks.h>
 
 struct Engine engine;
 
 #define WORKSPACE "workspace.db"
 
 int main(int argc, char* argv[]){
+
+	setStartTime(chron());
 
 	engine.frameNumber = 0;
 

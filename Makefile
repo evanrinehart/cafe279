@@ -16,6 +16,7 @@ LIBS = -lGL -lm -lpthread -lrt -lX11
 OBJECTS = \
 	linear.o \
 	loader.o \
+	clocks.o \
 	renderer.o \
 	physics.o \
 	floodfill.o \
@@ -28,13 +29,14 @@ $(EXE_NAME) : $(OBJECTS) main.o sqlite3.o libraylib.a
 	gcc -o $(EXE_NAME) $(OBJECTS) main.o sqlite3.o libraylib.a $(LIBS)
 
 # implicit rules and compile action for .c files used here
-main.o : engine.h renderer.h physics.h loader.h bsod.h
+main.o : engine.h renderer.h physics.h loader.h bsod.h clocks.h
 renderer.o : raylib.h renderer.h linear.h bsod.h doodad.h chunk.h megaman.h
 physics.o : doodad.h chunk.h linear.h
 loader.o : loader.h linear.h doodad.h chunk.h sqlite3.h
 doodad.o : doodad.h linear.h
 chunk.o : chunk.h floodfill.h
 linear.o : linear.h
+clocks.o : clocks.h
 bresenham.o : bresenham.h
 floodfill.o : floodfill.h
 

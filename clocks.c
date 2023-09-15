@@ -66,6 +66,7 @@ void setStartTime(struct Nano t_zero){
 	start_time = t_zero;
 }
 
+/*
 static void test(){
 
 	setStartTime(chron());
@@ -90,6 +91,6 @@ static void test(){
 
 	double e = (5e6 + m2) - (5e6 + m1);
 	printf("m2-m1 = %.18lf\n", e);
-}
 
-void main(){ test(); }
+}
+*/
