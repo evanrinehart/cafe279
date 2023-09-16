@@ -25,17 +25,11 @@ int sendMessageToClient(struct Mailbox *m);
 int sendMessageToServer(struct Mailbox *m);
 int waitForInbox(struct Mailbox *m);
 
-int checkInbox(struct Mailbox *m);
-
-
 struct Mailbox * mallocMailbox();
-void clearMailbox(struct Mailbox *m);
 void wipeMailbox(struct Mailbox *m);
 void closeMailbox(struct Mailbox *m);
 void cloneMailbox(struct Mailbox *dst, struct Mailbox *src);
 void printMailbox(struct Mailbox *m);
-
-void voidMailbox(struct Mailbox *m);
 
 void scribble8(struct Mailbox *m, unsigned char c);
 void scribbleChar(struct Mailbox *m, char c);
@@ -45,7 +39,6 @@ void scribble32(struct Mailbox *m, unsigned int n);
 void scribble64(struct Mailbox *m, unsigned long long n);
 void scribbleFloat(struct Mailbox *m, float x);
 void scribbleDouble(struct Mailbox *m, double x);
-
 
 int portFromAddr(struct sockaddr_storage *addr, socklen_t len);
 int portFromSocket(int socket);
@@ -64,10 +57,6 @@ struct sockaddr_in localhostPort(int port){
 }
 
 /* MAILBOX */
-
-void clearMailbox(struct Mailbox *m){
-	m->datasize = 0;
-}
 
 void wipeMailbox(struct Mailbox *m){
 	m->socket = 0;
@@ -305,65 +294,6 @@ int sendMessageToServer(struct Mailbox *m){
 	return 0;
 }
 
-static int serverInboxThread(void *u){
-
-	struct Mailbox *m = u;
-
-	for (;;) {
-		if (m->stopflag) break;
-
-		waitForInbox(m);
-
-		if (m->stopflag) break;
-
-		// m->data contains message of size m->datasize
-		m->dataflag = true;
-
-		// process the message as much as possible from this thread
-		// HERE
-		printf("server inbox got mail: ");
-		printMessage(m->data, m->datasize);
-		// data is consumed now
-
-		m->datasize = 0;
-		m->dataflag = false;
-	}
-	
-	return 0;
-}
-
-int spawnServerInboxThread(struct Mailbox *m){
-	m->stopflag = false;
-	int e = thrd_create(&m->thread, serverInboxThread, m); if(e != thrd_success){ return -1; }
-	return 0;
-}
-
-int unspawnServerInboxThread(struct Mailbox *m){
-	m->stopflag = true;
-
-	struct sockaddr_in addr = localhostPort(m->port);
-	socklen_t addrlen = sizeof addr;
-
-	// send dummy msg to wake up thread if necessary
-	int num = sendto(m->socket, NULL, 0, 0, (struct sockaddr*)&addr, addrlen);
-	if(num < 0){
-		fprintf(stderr, "(unspawnServerInboxThread) sendto: %s\n", strerror(errno));
-		return -1;
-	}
-
-	fprintf(stderr, "joining inbox thread... ");
-
-	int e = thrd_join(m->thread, NULL);
-
-	if(e != thrd_success){
-		fprintf(stderr, "thrd_join: error %d\n", e);
-		return -1;
-	}
-
-	fprintf(stderr, "joined\n");
-
-	return 0;
-}
 
 
 // create a UDP socket and bind it for listening
@@ -560,52 +490,6 @@ int waitForInbox(struct Mailbox *m){
 
 }
 
-
-/*
-	struct Mailbox mailboxA;
-	struct Mailbox mailboxB;
-
-	mailboxA.datasize = 0;
-	mailboxB.datasize = 0;
-
-	status = UDPServer2(12345, &mailboxA);              if (status < 0) return;
-	status = UDPClient2("localhost", 12345, &mailboxB); if (status < 0) return;
-	//int client = UDPClient("localhost", 12345); if (client < 0) return;
-
-	printMailbox(&mailboxA);
-	printMailbox(&mailboxB);
-
-	int serverPort = portFromSocket(mailboxA.socket);
-	int clientPort = portFromSocket(mailboxB.socket);
-
-	printf("serverPort = %d\n", serverPort);
-	printf("clientPort = %d\n", clientPort);
-
-	scribbleString(&mailboxB, "KNOCK\n");
-	scribbleString(&mailboxB, "KNOCK\n");
-	scribbleChar(&mailboxB, '?');
-	scribble32(&mailboxB, UINT_MAX - 240);
-
-	status = UDPSend(&mailboxB); if(status < 0) return;
-
-	status = UDPRecvFrom(&mailboxA); if(status < 0) return;
-
-	const char * aaa;
-	int aaap;
-
-	aaa = addressToString(&mailboxB.addr, &aaap);
-
-	printf("from addr = %s %d\n", aaa, aaap);
-	printMessage(mailboxA.data, mailboxA.datasize);
-
-	printf("num_read = %d\n", mailboxA.datasize);
-
-	close(mailboxA.socket);
-	close(mailboxB.socket);
-
-}
-*/
-
 int portFromAddr(struct sockaddr_storage *addr, socklen_t len){
 	in_port_t nport;
 	switch(addr->ss_family){
@@ -629,101 +513,3 @@ int portFromSocket(int socket){
 
 	return portFromAddr(&addr, addrlen);
 }
-
-void printMessage(unsigned char buf[], int n){
-	for(int i = 0; i < n; i++){
-		unsigned char byte = buf[i];
-		if(isprint(byte) && byte != ' '){
-			printf("%c ", byte);
-		}
-		else{
-			printf("#%u ", byte);
-		}
-	}
-
-	puts("");
-}
-
-
-
-struct Mailbox *outboxes[1024];
-struct Mailbox **outboxes_ptr = outboxes;
-
-struct Mailbox ** findOutbox(struct sockaddr_storage *addr){
-	for(struct Mailbox **pptr = outboxes; pptr < outboxes_ptr; pptr++){
-		if(compareAddress(addr, &(*pptr)->addr) == 0) return pptr;
-	}
-	return NULL;
-}
-
-void listOutboxes(){
-	printf("** listing outboxes **\n");
-	
-	for(struct Mailbox **pptr = outboxes; pptr < outboxes_ptr; pptr++){
-		printMailbox(*pptr);
-	}
-}
-
-void serverLoop(struct Mailbox *inbox){
-	for(;;){
-
-		int status = waitForInbox(inbox);
-
-		if(status < 0){
-			printf("recv failed, bailing out\n");
-			exit(1);
-		}
-
-		struct Mailbox **p = findOutbox(&inbox->addr);
-		struct Mailbox *outbox;
-
-		if(p == NULL){
-			outbox = mallocMailbox();
-			cloneMailbox(outbox, inbox);
-			*outboxes_ptr++ = outbox;
-		}
-		else{
-			outbox = *p;
-		}
-
-		scribbleString(outbox, "I HEARD\n");
-		status = sendMessageToClient(outbox);
-
-		if(status < 0){
-			printf("send failed, trashing outbox\n");
-			*p = *--outboxes_ptr;
-		}
-
-		printMailbox(inbox);
-		clearMailbox(inbox);
-
-		listOutboxes();
-
-	}
-}
-
-/*
-void main(){
-
-	struct Mailbox *inbox = mallocMailbox();
-
-	double x = -3.14159;
-
-	printf("x = %lf\n", x);
-
-	scribbleDouble(inbox, x);
-
-	printMessage(inbox->data, inbox->datasize);
-
-	double y = unscribbleDouble(inbox->data);
-
-	printf("y = %lf\n", y);
-
-
-	exit(1);
-
-	int status = UDPServer(12345, inbox); if (status < 0) return;
-
-	serverLoop(inbox);
-}
-*/

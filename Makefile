@@ -23,6 +23,7 @@ OBJECTS = \
 	bresenham.o \
 	chunk.o \
 	net.o \
+	server.o \
 	doodad.o
 
 EXE_NAME = game
@@ -41,6 +42,7 @@ clocks.o : clocks.h
 bresenham.o : bresenham.h
 floodfill.o : floodfill.h
 net.o : net.h
+server.o : net.h clocks.h server.h
 
 # define a custom pattern rule to compile D files in the same way C files are
 #%.o : %.d ; $(DC) -fno-druntime -c $<

@@ -33,6 +33,7 @@
 #include <sys/socket.h>
 #include <threads.h>
 #include <net.h>
+#include <server.h>
 
 struct Server {
 	struct Mailbox inbox;
@@ -377,9 +378,13 @@ void inputCharacter(int c){
 }
 
 void pressH(){
+
+	int status;
+
 	if(engine.multiplayerEnabled && engine.multiplayerRole == SERVER){
-		unspawnServerInboxThread(&server.inbox);
-		closeMailbox(&server.inbox);
+		status = unspawnServer(&server.inbox);
+		if(status < 0) return;
+
 		engine.multiplayerEnabled = false;
 		fprintf(stderr, "Server terminated\n");
 	}
@@ -388,10 +393,7 @@ void pressH(){
 	}
 	else{
 		puts("Host Game ...");
-		int status = UDPServer(engine.serverPort, &server.inbox);
-		if(status < 0) return;
-
-		status = spawnServerInboxThread(&server.inbox);
+		status = spawnServer(engine.serverPort, &server.inbox);
 		if(status < 0) return;
 
 		engine.multiplayerEnabled = true;
