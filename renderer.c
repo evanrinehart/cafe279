@@ -26,7 +26,17 @@
 #include <bsod.h>
 #include <floodfill.h>
 
+#include <clocks.h>
+
 #include <physics.h> // temporary
+
+#include <sys/socket.h>
+#include <threads.h>
+#include <net.h>
+
+struct Server {
+	struct Mailbox inbox;
+} server;
 
 vec2 screenToWorld(double screenX, double screenY);
 void getViewBounds(double *l, double *r, double *b, double *t);
@@ -366,8 +376,40 @@ void inputCharacter(int c){
 	printf("input character %c\n", c);
 }
 
+void pressH(){
+	if(engine.multiplayerEnabled && engine.multiplayerRole == SERVER){
+		unspawnServerInboxThread(&server.inbox);
+		closeMailbox(&server.inbox);
+		engine.multiplayerEnabled = false;
+		fprintf(stderr, "Server terminated\n");
+	}
+	else if(engine.multiplayerEnabled){
+		fprintf(stderr, "You're in the middle of a multiplayer game\n");
+	}
+	else{
+		puts("Host Game ...");
+		int status = UDPServer(engine.serverPort, &server.inbox);
+		if(status < 0) return;
+
+		status = spawnServerInboxThread(&server.inbox);
+		if(status < 0) return;
+
+		engine.multiplayerEnabled = true;
+		engine.multiplayerRole = SERVER;
+		puts("... Server Online");
+	}
+}
+
+void pressC(){
+	puts("Connect To Server");
+}
+
 void pressG(){
 	addObject();
+}
+
+void pressPause(){
+	engine.paused = !engine.paused;
 }
 
 void pressR(){
@@ -399,6 +441,7 @@ void holdUpDownArrow(vec2 mouse, int updown){
 // source event from raylib
 
 void dispatchInput(){
+
 	// mouse
 	vec2 mouse_prev = screen.mouse;
 	vec2 mouse_new = updateMouse();
@@ -424,6 +467,9 @@ void dispatchInput(){
 	// keyboard
 	if(IsKeyPressed(KEY_G)){ pressG(); }
 	if(IsKeyPressed(KEY_R)){ pressR(); }
+	if(IsKeyPressed(KEY_PAUSE)){ pressPause(); }
+	if(IsKeyPressed(KEY_H)){ pressH(); }
+	if(IsKeyPressed(KEY_C)){ pressC(); }
 
 	if(IsKeyDown(KEY_UP))  { holdUpDownArrow(mouse,  1); }
 	if(IsKeyDown(KEY_DOWN)){ holdUpDownArrow(mouse, -1); }
@@ -648,6 +694,7 @@ void drawMegaman(vec2 p, int flip){
 }
 
 void rerenderEverything(){
+
 	BeginDrawing();
 
 	ClearBackground(WHITE);
@@ -679,10 +726,14 @@ void rerenderEverything(){
 	/* * debug text * */
 	DrawFPS(0,0);
 	DrawText(TextFormat("Zoom = %lf", zoom), 1, 20, 10, BLACK);
+	DrawText(TextFormat("LocalTime = %lf", engine.localTime), 1, 30, 10, BLACK);
+	DrawText(TextFormat("ServerTime = %lf", engine.serverTime), 1, 40, 10, BLACK);
+	DrawText(TextFormat("TimeOffset = %lf", engine.timeOffset), 1, 50, 10, BLACK);
+	DrawText(TextFormat("Paused = %d", engine.paused), 1, 60, 10, BLACK);
+	DrawText(TextFormat("FrameNo = %d", engine.frameNumber), 1, 70, 10, BLACK);
 
-
-	renderPressureOverlay();
-	renderRoomOverlay();
+	//renderPressureOverlay();
+	//renderRoomOverlay();
 	if(overlayMode > 0) renderEdgeOverlay(overlayMode);
 
 	EndDrawing();

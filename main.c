@@ -1,47 +1,64 @@
 /* MAIN.C */
 
-#include <stdlib.h>
-#include <stdio.h>
+#include <stdio.h>    // (types)
+#include <string.h>   // strcpy
+#include <stdbool.h>  // (type)
 
-#include <linear.h>
-#include <renderer.h>
-#include <physics.h>
-#include <loader.h>
-#include <engine.h>
-#include <bsod.h>
-#include <clocks.h>
+#include <linear.h>   // (types)
+#include <renderer.h> // initializeWindow, initializeEverything, rerenderEverything, dispatchInput
+#include <physics.h>  // physics
+#include <loader.h>   // loadConfig, loadWorkspace, saveWorkspace
+#include <engine.h>   // (type)
+#include <bsod.h>     // bsod, bsodN
+#include <clocks.h>   // chron, chronf, setStartTime
 
 struct Engine engine;
-
-#define WORKSPACE "workspace.db"
 
 int main(int argc, char* argv[]){
 
 	setStartTime(chron());
 
+	engine.paused = true;
 	engine.frameNumber = 0;
+	engine.timeOffset = 0;
+	engine.localTime = chronf();
+	engine.serverTime = engine.localTime;
+	engine.multiplayerEnabled = false;
+	engine.multiplayerRole = SERVER;
+	strcpy(engine.serverHostname, "localhost");
+	engine.serverPort = 12345;
 
 	int width  = 1920 / 2;
 	int height = 1080 / 2;
+
+	const char workspace[] = "workspace.db";
 
 	int status;
 
 	status = loadConfig(stderr, "config.db");         if(status < 0){ bsodN("loadConfig failed"); }
 	status = initializeWindow(width, height, "GAME"); if(status < 0){ bsodN("initializeWindow failed"); }
 	status = loadAssets();                            if(status < 0){ bsod("loadAssets failed"); }
-	status = loadWorkspace(stderr, WORKSPACE);        if(status < 0){ bsod("loadWorkspace failed"); }
+	status = loadWorkspace(stderr, workspace);        if(status < 0){ bsod("loadWorkspace failed"); }
 
 	initializeEverything();
 
 	for(;;){
+		engine.localTime = chronf();
+		engine.serverTime = engine.localTime + engine.timeOffset;
+
 		rerenderEverything();
 		dispatchInput();
-		physics();
+		if(engine.paused){
+		}
+		else{
+			physics();
+		}
 		if(windowShouldClose()) break;
-		engine.frameNumber++;
+
+		if(engine.paused == 0) engine.frameNumber++;
 	}
 
-	status = saveWorkspace(stderr, WORKSPACE);
+	status = saveWorkspace(stderr, workspace);
 	if(status < 0){
 		bsod("(bug) saveWorkspace failed");
 	}
