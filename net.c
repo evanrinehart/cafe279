@@ -3,48 +3,24 @@
 #include <unistd.h>
 #include <stdlib.h>
 #include <stdbool.h>
-#include <ctype.h>
+//#include <ctype.h>
 #include <errno.h>
-#include <sys/types.h>
+//#include <sys/types.h>
 #include <sys/socket.h>
 #include <netdb.h>
-#include <netinet/in.h>
+//#include <netinet/in.h>
 #include <arpa/inet.h>
 
 #include <math.h>
-#include <limits.h>
+//#include <limits.h>
 
 #include <threads.h>
 #include <net.h>
 
 
-int UDPClient(const char * host, int port, struct Mailbox *mb);
-int UDPServer(int port, struct Mailbox *m);
-
-int sendMessageToClient(struct Mailbox *m);
-int sendMessageToServer(struct Mailbox *m);
-int waitForInbox(struct Mailbox *m);
-
-struct Mailbox * mallocMailbox();
-void wipeMailbox(struct Mailbox *m);
-void closeMailbox(struct Mailbox *m);
-void cloneMailbox(struct Mailbox *dst, struct Mailbox *src);
-void printMailbox(struct Mailbox *m);
-
-void scribble8(struct Mailbox *m, unsigned char c);
-void scribbleChar(struct Mailbox *m, char c);
-void scribbleString(struct Mailbox *m, const char *str);
-void scribble16(struct Mailbox *m, unsigned int n);
-void scribble32(struct Mailbox *m, unsigned int n);
-void scribble64(struct Mailbox *m, unsigned long long n);
-void scribbleFloat(struct Mailbox *m, float x);
-void scribbleDouble(struct Mailbox *m, double x);
-
-int portFromAddr(struct sockaddr_storage *addr, socklen_t len);
-int portFromSocket(int socket);
-void printMessage(unsigned char buf[], int n);
 const char * addressToString(struct sockaddr_storage *ss, int *port);
-int compareAddress(struct sockaddr_storage *ssA, struct sockaddr_storage *ssB);
+void printMailbox(struct Mailbox *m);
+int portFromSocket(int socket);
 
 /* misc */
 
@@ -60,11 +36,16 @@ struct sockaddr_in localhostPort(int port){
 
 void wipeMailbox(struct Mailbox *m){
 	m->socket = 0;
+	m->port = 0;
 	m->error_number = 0;
 	m->datasize = 0;
 	m->addrlen = 0;
 	bzero(&m->addr, sizeof m->addr);
 	m->data[0] = 0;
+	m->state = 0;
+	m->counter = 0;
+	m->deathtime = 0;
+	m->stopflag = 0;
 }
 
 
@@ -95,8 +76,8 @@ void printMailbox(struct Mailbox *m){
 	printf("  addr = %s %d\n", ip, port);
 	printf("  error_number = %d\n", m->error_number);
 	printf("  datasize = %d\n", m->datasize);
-	printf("  data[%lu] =\n", sizeof m->data);
-	printMessage(m->data, m->datasize);
+	//printf("  data[%lu] = \n", sizeof m->data);
+	//printMessage(m->data, m->datasize);
 }
 
 struct Mailbox * mallocMailbox(){
@@ -507,9 +488,19 @@ int portFromSocket(int socket){
 	int e = getsockname(socket, (struct sockaddr*)&addr, &addrlen);
 
 	if(e < 0){
-		printf("getsockname: %s\n", strerror(errno));
+		fprintf(stderr, "getsockname: %s\n", strerror(errno));
 		return -1;
 	}
 
 	return portFromAddr(&addr, addrlen);
 }
+
+void dumbSendTo(int socket, struct sockaddr_storage *addr, socklen_t addrlen, const char *msg){
+	int len = strlen(msg);
+	int num = sendto(socket, msg, len, 0, (struct sockaddr*)addr, addrlen);
+	if(num < 0){
+		fprintf(stderr, "dumbSendTo: %s\n", strerror(errno));
+	}
+}
+
+

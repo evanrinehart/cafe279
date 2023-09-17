@@ -1,3 +1,13 @@
+enum ProtocolState {
+	PS_START,
+	PS_WHO_IS_IT,
+	PS_SECRET_WORD,
+	PS_SYNC_CLOCKS,
+	PS_STREAMING,
+	PS_LINKALIVE,
+	PS_LINKDEAD
+};
+
 #define MAILBOX_SIZE 1024
 
 struct Mailbox {
@@ -7,6 +17,9 @@ struct Mailbox {
 	socklen_t addrlen;            // size of address storage
 	thrd_t thread;
 	int error_number;
+	double deathtime;             // time after which mailbox is reclaimed
+	int counter;                  // total number of messages received
+	enum ProtocolState state;
 	bool stopflag;
 	bool dataflag;  
 	int datasize;
@@ -25,6 +38,8 @@ void printMailbox(struct Mailbox *m);
 struct sockaddr_in localhostPort(int port);
 
 int compareAddress(struct sockaddr_storage *ssA, struct sockaddr_storage *ssB);
+
+void dumbSendTo(int socket, struct sockaddr_storage *addr, socklen_t addrlen, const char *msg);
 
 void scribble8(struct Mailbox *m, unsigned char c);
 void scribbleChar(struct Mailbox *m, char c);
