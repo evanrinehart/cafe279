@@ -126,6 +126,8 @@ int initializeWindow(int w, int h, const char* title){
 
 	updateMouse();
 
+	InitAudioDevice();
+
 	return 0;
 }
 
@@ -144,6 +146,16 @@ static Font infoFont3;
 static const char* fontpath = "assets/fonts/Roboto_Condensed/RobotoCondensed-Regular.ttf";
 //static const char* fontpath = "assets/fonts/Roboto_Condensed/RobotoCondensed-Regular.ttf";
 static int F = 13;
+
+Sound callingSound;
+int stillCalling = 0;
+int callingTimer = 240;
+Sound wrongSound;
+Sound successSound;
+Sound closedSound;
+Sound dsradioSound;
+Sound grantedSound;
+Sound messageSound;
 
 int loadAssets(){
 
@@ -168,6 +180,14 @@ int loadAssets(){
 
 	tilesetTex = LoadTexture("assets/tileset.png");
 	SetTextureWrap(tilesetTex, TEXTURE_WRAP_CLAMP);
+
+	callingSound = LoadSound("assets/sounds/calling.mp3");
+	wrongSound = LoadSound("assets/sounds/wrong.mp3");
+	successSound = LoadSound("assets/sounds/success.wav");
+	closedSound = LoadSound("assets/sounds/closed.wav");
+	dsradioSound = LoadSound("assets/sounds/dsradio.wav");
+	grantedSound = LoadSound("assets/sounds/granted.wav");
+	messageSound = LoadSound("assets/sounds/message.mp3");
 
 	return 0;
 }
@@ -387,21 +407,25 @@ void printMessage(unsigned char buf[], int n){
 }
 
 void newConnectionCb(int connId, const char * identifier){
+	PlaySound(dsradioSound);
 	printf("New Connection connId=%d identifier=%s\n", connId, identifier);
 }
 
 void newMessageCb(int connId, unsigned char * data, int datasize){
 	printf("New Message connId=%d: ", connId);
 	printMessage(data, datasize);
+	PlaySound(messageSound);
 }
 
 void disconnectionCb(int connId){
+	PlaySound(dsradioSound);
 	printf("connId=%d disconnected\n", connId);
 }
 
 void newMessageCb2(int connId, unsigned char * data, int datasize){
 	printf("Client got New Message connId=%d: ", connId);
 	printMessage(data, datasize);
+	PlaySound(messageSound);
 }
 
 void newChunkCb(unsigned char * data, int datasize){
@@ -410,14 +434,23 @@ void newChunkCb(unsigned char * data, int datasize){
 }
 
 void connectionSucceededCb(void){
+	StopSound(callingSound);
+	PlaySound(successSound);
+	stillCalling = 0;
 	printf("connection succeeded\n");
 }
 
 void connectionFailedCb(int error){
+	StopSound(callingSound);
+	stillCalling = 0;
+	PlaySound(wrongSound);
 	printf("connection failed\n");
 }
 
 void connectionClosedCb(void){
+	StopSound(callingSound);
+	stillCalling = 0;
+	PlaySound(closedSound);
 	printf("connection closed\n");
 }
 
@@ -429,6 +462,7 @@ void pressH(){
 		disableServer();
 		engine.multiplayerEnabled = false;
 		fprintf(stderr, "Server terminated\n");
+		PlaySound(closedSound);
 	}
 	else if(engine.multiplayerEnabled){
 		fprintf(stderr, "You're in the middle of a multiplayer game\n");
@@ -448,6 +482,7 @@ void pressH(){
 		engine.multiplayerEnabled = true;
 		engine.multiplayerRole = SERVER;
 		puts("... Server Online");
+		PlaySound(grantedSound);
 	}
 
 }
@@ -460,19 +495,23 @@ void pressC(){
 	static bool clientEn = false;
 	if(!clientEn){
 		struct NetworkCallbacks2 clientCallbacks = {
-			connectionSucceededCb,
+			.csc = connectionSucceededCb,
 			.cfc = connectionFailedCb,
-			connectionClosedCb,
-			newMessageCb2,
-			newChunkCb,
+			.ccc = connectionClosedCb,
+			.nmc = newMessageCb2,
+			.nchc = newChunkCb,
 		};
-		int status = connectToServer("localhost", 12345, clientCallbacks);
+		int status = connectToServer(engine.serverHostname, 12345, clientCallbacks);
 		if(status < 0) return;
 		clientEn = true;
+
+		PlaySound(callingSound);
+		stillCalling = 1;
 	}
 	else{
 		disconnectFromServer();
 		clientEn = false;
+		PlaySound(closedSound);
 	}
 }
 
@@ -781,6 +820,14 @@ void drawMegaman(vec2 p, int flip){
 }
 
 void rerenderEverything(){
+
+	if(stillCalling){
+		callingTimer--;
+		if(callingTimer == 0){
+			callingTimer = 350;
+			PlaySound(callingSound);
+		}
+	}
 
 	BeginDrawing();
 

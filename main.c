@@ -26,8 +26,9 @@ int main(int argc, char* argv[]){
 	engine.serverTime = engine.localTime;
 	engine.multiplayerEnabled = false;
 	engine.multiplayerRole = SERVER;
-	strcpy(engine.serverHostname, "localhost");
 	engine.serverPort = 12345;
+	strcpy(engine.serverHostname, "localhost");
+	if(argc > 1){ strcpy(engine.serverHostname, argv[1]); }
 
 	int width  = 1920 / 2;
 	int height = 1080 / 2;
