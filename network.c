@@ -289,7 +289,7 @@ static void pollClient(int timeout){
 			}
 			else if (channel == 1){
 				// a chunk
-				client.callbacks.nchc(0, event.packet->data, event.packet->dataLength);
+				client.callbacks.nchc(event.packet->data, event.packet->dataLength);
 				enet_packet_destroy(event.packet);
 			}
 			else{

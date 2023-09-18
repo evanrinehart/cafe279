@@ -404,8 +404,8 @@ void newMessageCb2(int connId, unsigned char * data, int datasize){
 	printMessage(data, datasize);
 }
 
-void newChunkCb(int connId, unsigned char * data, int datasize){
-	printf("Client got New Chunk connId=%d: ", connId);
+void newChunkCb(unsigned char * data, int datasize){
+	printf("Client got New Chunk: ");
 	printMessage(data, datasize);
 }
 

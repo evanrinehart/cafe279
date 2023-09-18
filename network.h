@@ -1,11 +1,11 @@
 typedef void (*newConnectionCallback)(int connId, const char * identifier);
 typedef void (*newMessageCallback)(int connId, unsigned char * data, int datasize);
-typedef void (*newChunkCallback)(int connId, unsigned char * data, int datasize);
 typedef void (*disconnectionCallback)(int connId);
 
 typedef void (*connectionSucceededCallback)(void);
 typedef void (*connectionFailedCallback)(int error);
 typedef void (*connectionClosedCallback)(void);
+typedef void (*newChunkCallback)(unsigned char * data, int datasize);
 
 
 // server mode
@@ -20,7 +20,6 @@ struct NetworkCallbacks2 {
 	connectionSucceededCallback csc;
 	connectionFailedCallback cfc;
 	connectionClosedCallback ccc;
-
 	newMessageCallback nmc;
 	newChunkCallback nchc;
 };
