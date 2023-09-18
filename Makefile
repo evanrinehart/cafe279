@@ -5,6 +5,7 @@ CFLAGS = \
 	-g \
 	-O2 \
 	-I. \
+	-Iinclude \
 	-Wall \
 	-Werror \
 	-Wno-error=unused-variable \
@@ -22,17 +23,16 @@ OBJECTS = \
 	floodfill.o \
 	bresenham.o \
 	chunk.o \
-	net.o \
-	server.o \
+	network.o \
 	doodad.o
 
 EXE_NAME = game
-$(EXE_NAME) : $(OBJECTS) main.o sqlite3.o libraylib.a
-	gcc -o $(EXE_NAME) $(OBJECTS) main.o sqlite3.o libraylib.a $(LIBS)
+$(EXE_NAME) : $(OBJECTS) main.o sqlite3.o libraylib.a libenet.a
+	gcc -o $(EXE_NAME) $(OBJECTS) main.o sqlite3.o libraylib.a libenet.a $(LIBS)
 
 # implicit rules and compile action for .c files used here
 main.o : engine.h renderer.h physics.h loader.h bsod.h clocks.h
-renderer.o : raylib.h renderer.h linear.h bsod.h doodad.h chunk.h megaman.h net.h
+renderer.o : raylib.h renderer.h linear.h bsod.h doodad.h chunk.h megaman.h network.h
 physics.o : doodad.h chunk.h linear.h
 loader.o : loader.h linear.h doodad.h chunk.h sqlite3.h
 doodad.o : doodad.h linear.h
@@ -41,8 +41,7 @@ linear.o : linear.h
 clocks.o : clocks.h
 bresenham.o : bresenham.h
 floodfill.o : floodfill.h
-net.o : net.h
-server.o : net.h clocks.h server.h
+network.o : network.h
 
 # define a custom pattern rule to compile D files in the same way C files are
 #%.o : %.d ; $(DC) -fno-druntime -c $<

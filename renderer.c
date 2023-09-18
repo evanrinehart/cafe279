@@ -30,14 +30,7 @@
 
 #include <physics.h> // temporary
 
-#include <sys/socket.h>
-#include <threads.h>
-#include <net.h>
-#include <server.h>
-
-struct Server {
-	struct Mailbox inbox;
-} server;
+#include <network.h>
 
 vec2 screenToWorld(double screenX, double screenY);
 void getViewBounds(double *l, double *r, double *b, double *t);
@@ -377,14 +370,63 @@ void inputCharacter(int c){
 	printf("input character %c\n", c);
 }
 
+// dummy server callbacks
+#include <ctype.h>
+void printMessage(unsigned char buf[], int n){
+	for(int i = 0; i < n; i++){
+		unsigned char byte = buf[i];
+		if(isprint(byte) && byte != ' '){
+			printf("%c ", byte);
+		}
+		else{
+			printf("#%u ", byte);
+		}
+	}
+
+	puts("");
+}
+
+void newConnectionCb(int connId, const char * identifier){
+	printf("New Connection connId=%d identifier=%s\n", connId, identifier);
+}
+
+void newMessageCb(int connId, unsigned char * data, int datasize){
+	printf("New Message connId=%d: ", connId);
+	printMessage(data, datasize);
+}
+
+void disconnectionCb(int connId){
+	printf("connId=%d disconnected\n", connId);
+}
+
+void newMessageCb2(int connId, unsigned char * data, int datasize){
+	printf("Client got New Message connId=%d: ", connId);
+	printMessage(data, datasize);
+}
+
+void newChunkCb(int connId, unsigned char * data, int datasize){
+	printf("Client got New Chunk connId=%d: ", connId);
+	printMessage(data, datasize);
+}
+
+void connectionSucceededCb(void){
+	printf("connection succeeded\n");
+}
+
+void connectionFailedCb(int error){
+	printf("connection failed\n");
+}
+
+void connectionClosedCb(void){
+	printf("connection closed\n");
+}
+
 void pressH(){
 
 	int status;
 
 	if(engine.multiplayerEnabled && engine.multiplayerRole == SERVER){
-		status = unspawnServer(&server.inbox);
-		if(status < 0) return;
-
+		disableServer();
 		engine.multiplayerEnabled = false;
 		fprintf(stderr, "Server terminated\n");
 	}
@@ -392,22 +434,63 @@ void pressH(){
 		fprintf(stderr, "You're in the middle of a multiplayer game\n");
 	}
 	else{
+
+		struct NetworkCallbacks1 serverCallbacks = {
+			newConnectionCb,
+			newMessageCb,
+			disconnectionCb
+		};
+
 		puts("Host Game ...");
-		status = spawnServer(engine.serverPort, &server.inbox);
+		status = enableServer(engine.serverPort, serverCallbacks);
 		if(status < 0) return;
 
 		engine.multiplayerEnabled = true;
 		engine.multiplayerRole = SERVER;
 		puts("... Server Online");
 	}
+
+}
+
+void pressN(){
+	pollNetwork();
 }
 
 void pressC(){
-	puts("Connect To Server");
+	static bool clientEn = false;
+	if(!clientEn){
+		struct NetworkCallbacks2 clientCallbacks = {
+			connectionSucceededCb,
+			.cfc = connectionFailedCb,
+			connectionClosedCb,
+			newMessageCb2,
+			newChunkCb,
+		};
+		int status = connectToServer("localhost", 12345, clientCallbacks);
+		if(status < 0) return;
+		clientEn = true;
+	}
+	else{
+		disconnectFromServer();
+		clientEn = false;
+	}
+}
+
+void pressL(){
+	unsigned char msg[] = "HELLO WORLD\n";
+	int status = sendMessageTo(0, msg, sizeof msg);
+	if(status < 0){
+		printf("sendMessage failed!\n");
+	}
 }
 
 void pressG(){
-	addObject();
+	//addObject();
+	unsigned char msg[] = "HELLO WORLD\n";
+	int status = sendMessage(msg, sizeof msg);
+	if(status < 0){
+		printf("sendMessage failed!\n");
+	}
 }
 
 void pressPause(){
@@ -472,6 +555,8 @@ void dispatchInput(){
 	if(IsKeyPressed(KEY_PAUSE)){ pressPause(); }
 	if(IsKeyPressed(KEY_H)){ pressH(); }
 	if(IsKeyPressed(KEY_C)){ pressC(); }
+	if(IsKeyPressed(KEY_N)){ pressN(); }
+	if(IsKeyPressed(KEY_L)){ pressL(); }
 
 	if(IsKeyDown(KEY_UP))  { holdUpDownArrow(mouse,  1); }
 	if(IsKeyDown(KEY_DOWN)){ holdUpDownArrow(mouse, -1); }
