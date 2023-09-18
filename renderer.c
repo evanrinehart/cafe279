@@ -163,7 +163,7 @@ int loadAssets(){
 
 	FilePathList fpl = LoadDirectoryFiles("assets/icons");
 	for (int i = 0; i < fpl.count; i++) {
-		icons[i] = LoadTexture(fpl.paths[i]);
+		//icons[i] = LoadTexture(fpl.paths[i]);
 		icon_count++;
 	}
 
