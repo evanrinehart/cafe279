@@ -1,16 +1,17 @@
 /* MAIN.C */
 
-#include <stdio.h>    // (types)
+#include <stdio.h>
 #include <string.h>   // strcpy
-#include <stdbool.h>  // (type)
+#include <stdbool.h>
 
-#include <linear.h>   // (types)
-#include <renderer.h> // initializeWindow, initializeEverything, rerenderEverything, dispatchInput
+#include <linear.h>
+#include <renderer.h> // ...
 #include <physics.h>  // physics
 #include <loader.h>   // loadConfig, loadWorkspace, saveWorkspace
 #include <engine.h>   // (type)
 #include <bsod.h>     // bsod, bsodN
 #include <clocks.h>   // chron, chronf, setStartTime
+#include <network.h>  // pollNetwork
 
 struct Engine engine;
 
@@ -48,11 +49,14 @@ int main(int argc, char* argv[]){
 
 		rerenderEverything();
 		dispatchInput();
+		pollNetwork();
+
 		if(engine.paused){
 		}
 		else{
 			physics();
 		}
+
 		if(windowShouldClose()) break;
 
 		if(engine.paused == 0) engine.frameNumber++;
