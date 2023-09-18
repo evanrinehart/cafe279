@@ -828,6 +828,8 @@ void rerenderEverything(){
 
 
 void shutdownEverything(){
+	disconnectFromServer();
+	disableServer();
 	CloseWindow();
 }
 
