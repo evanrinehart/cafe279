@@ -10,3 +10,7 @@ void rerenderEverything();
 
 int windowShouldClose();
 void shutdownEverything();
+
+
+
+int enableDedicated();

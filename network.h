@@ -37,3 +37,8 @@ void closeConnection(int connId);
 
 void pollNetwork();
 void pollNetworkDedicated();
+
+
+
+double getPingTime();
+double getPingTimeTo(int connId);

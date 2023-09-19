@@ -25,6 +25,7 @@ OBJECTS = \
 	chunk.o \
 	network.o \
 	misc.o \
+	messages.o \
 	doodad.o
 
 EXE_NAME = game
@@ -42,6 +43,7 @@ linear.o : linear.h
 clocks.o : clocks.h
 bresenham.o : bresenham.h
 floodfill.o : floodfill.h
+messages.o : messages.h
 misc.o : misc.h
 network.o : include/enet/enet.h network.h
 

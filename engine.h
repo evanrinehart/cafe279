@@ -5,6 +5,7 @@ struct Engine {
 	double localTime;
 	double timeOffset;
 	bool multiplayerEnabled;
+	bool headless;
 	enum {SERVER, CLIENT} multiplayerRole;
 	char serverHostname[1024];
 	int serverPort;

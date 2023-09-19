@@ -388,3 +388,36 @@ void pollNetworkDedicated() {
 	if (server.enabled) pollServer(1000);
 
 }
+
+
+
+
+double getPingTime() {
+	if (client.enabled == false){
+		fprintf(stderr, "getPingTime: client not enabled\n");
+		return 1;
+	}
+	else if (client.connected == false){
+		fprintf(stderr, "getPingTime: client not connected\n");
+		return 1;
+	}
+	else {
+		return client.peer->roundTripTime;
+	}
+}
+
+double getPingTimeTo(int connId) {
+	if (server.enabled == false){
+		fprintf(stderr, "getPingTimeTo: server not enabled\n");
+		return 1;
+	}
+
+	ENetPeer *peer = conns[connId].peer;
+
+	if (peer == NULL){
+		fprintf(stderr, "getPingTime: connId %d not found\n", connId);
+		return 1;
+	}
+
+	return peer->roundTripTime;
+}

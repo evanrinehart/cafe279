@@ -1,4 +1,7 @@
 /* MAIN.C */
+#include <stdlib.h>
+#include <signal.h>
+#include <errno.h>
 
 #include <stdio.h>
 #include <string.h>   // strcpy
@@ -12,6 +15,7 @@
 #include <bsod.h>     // bsod, bsodN
 #include <clocks.h>   // chron, chronf, setStartTime
 #include <network.h>  // pollNetwork
+
 
 struct Engine engine;
 
@@ -50,17 +54,14 @@ int main(int argc, char* argv[]){
 
 		rerenderEverything();
 		dispatchInput();
+
 		pollNetwork();
 
-		if(engine.paused){
-		}
-		else{
-			physics();
-		}
+		if(engine.paused == false) physics();
 
 		if(windowShouldClose()) break;
 
-		if(engine.paused == 0) engine.frameNumber++;
+		if(engine.paused == false) engine.frameNumber++;
 	}
 
 	status = saveWorkspace(stderr, workspace);

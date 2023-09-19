@@ -32,6 +32,8 @@
 
 #include <network.h>
 
+#include <messages.h>
+
 #include <misc.h>
 
 vec2 screenToWorld(double screenX, double screenY);
@@ -109,6 +111,8 @@ vec2 updateMouse(){
 
 int initializeWindow(int w, int h, const char* title){
 
+	if(engine.headless) return 0;
+
 	fprintf(stderr, "%s(%d) initializeWindow...\n", __FILE__, __LINE__);
 
 	screen.w = w;
@@ -160,6 +164,8 @@ Sound grantedSound;
 Sound messageSound;
 
 int loadAssets(){
+
+	if(engine.headless) return 0;
 
 	fprintf(stderr, "%s(%d) loadAssets...\n", __FILE__, __LINE__);
 
@@ -398,9 +404,23 @@ void newConnectionCb(int connId, const char * identifier){
 }
 
 void newMessageCb(int connId, unsigned char * data, int datasize){
-	printf("New Message connId=%d: ", connId);
+	printf("New Message from connId=%d: ", connId);
 	printData(data, datasize);
 	PlaySound(messageSound);
+
+	struct Ping ping;
+	int e = parsePing(data, datasize, &ping);
+	if(e < 0){ printf("failed to parse PING\n"); return; }
+
+	printf("Ping %d %lf\n", ping.sequence, ping.time);
+
+	double t = chronf();
+	struct Pong pong = {ping.sequence, ping.time, t};
+	unsigned char buf[256];
+	int size = unparsePong(&pong, buf, 256);
+	if(size < 0){ printf("failed to unparse PONG\n"); return; }
+	e = sendMessageTo(connId, buf, size);
+	if(e < 0){ printf("failed to send PONG\n"); return; }
 }
 
 void disconnectionCb(int connId){
@@ -412,6 +432,17 @@ void newMessageCb2(int connId, unsigned char * data, int datasize){
 	printf("Client got New Message connId=%d: ", connId);
 	printData(data, datasize);
 	PlaySound(messageSound);
+
+
+	struct Pong pong;
+	int e = parsePong(data, datasize, &pong);
+	if(e < 0){ printf("failed to parse PONG\n"); return; }
+
+	double now = chronf();
+	printf("Pong %d %lf %lf now=%lf\n", pong.sequence, pong.time1, pong.time2, now);
+	printf("time1 = %lf\n", pong.time1);
+	printf("time2 = %lf\n", now);
+	printf("time2 - time1 = %lf\n", now - pong.time1);
 }
 
 void newChunkCb(unsigned char * data, int datasize){
@@ -438,6 +469,25 @@ void connectionClosedCb(void){
 	stillCalling = 0;
 	PlaySound(closedSound);
 	printf("connection closed\n");
+}
+
+
+
+int enableDedicated(){
+	struct NetworkCallbacks1 serverCallbacks = {
+		newConnectionCb,
+		newMessageCb,
+		disconnectionCb
+	};
+
+	puts("Host Game ...");
+	int status = enableServer(engine.serverPort, serverCallbacks);
+	if(status < 0)  return -1;
+
+	engine.multiplayerEnabled = true;
+	engine.multiplayerRole = SERVER;
+	puts("... Server Online");
+	return 0;
 }
 
 void pressH(){
@@ -548,9 +598,32 @@ void holdUpDownArrow(vec2 mouse, int updown){
 
 
 
+void pressP(){
+	double p = getPingTime();
+
+	printf("ping = %lf\n", p);
+
+	return;
+
+	double t = chronf();
+	struct Ping ping = {0, t};
+	unsigned char buf[1024];
+	int size = unparsePing(&ping, buf, 1024);
+	int e = sendMessage(buf, size);
+	if(e<0){ printf("ping failed to send\n"); return; }
+
+	double timeout = t + 0.250;
+	while(chronf() < timeout){
+		pollNetwork();
+	}
+}
+
+
 // source event from raylib
 
 void dispatchInput(){
+
+	if(engine.headless) return;
 
 	// mouse
 	vec2 mouse_prev = screen.mouse;
@@ -582,6 +655,7 @@ void dispatchInput(){
 	if(IsKeyPressed(KEY_C)){ pressC(); }
 	if(IsKeyPressed(KEY_N)){ pressN(); }
 	if(IsKeyPressed(KEY_L)){ pressL(); }
+	if(IsKeyPressed(KEY_P)){ pressP(); }
 
 	if(IsKeyDown(KEY_UP))  { holdUpDownArrow(mouse,  1); }
 	if(IsKeyDown(KEY_DOWN)){ holdUpDownArrow(mouse, -1); }
@@ -815,6 +889,8 @@ void rerenderEverything(){
 		}
 	}
 
+	if(engine.headless) return;
+
 	BeginDrawing();
 
 	ClearBackground(WHITE);
@@ -863,6 +939,7 @@ void rerenderEverything(){
 void shutdownEverything(){
 	disconnectFromServer();
 	disableServer();
+	if(engine.headless) return;
 	CloseWindow();
 }
 
