@@ -32,6 +32,8 @@
 
 #include <network.h>
 
+#include <misc.h>
+
 vec2 screenToWorld(double screenX, double screenY);
 void getViewBounds(double *l, double *r, double *b, double *t);
 void drawVerticalRule(double worldX, Color c);
@@ -390,22 +392,6 @@ void inputCharacter(int c){
 	printf("input character %c\n", c);
 }
 
-// dummy server callbacks
-#include <ctype.h>
-void printMessage(unsigned char buf[], int n){
-	for(int i = 0; i < n; i++){
-		unsigned char byte = buf[i];
-		if(isprint(byte) && byte != ' '){
-			printf("%c ", byte);
-		}
-		else{
-			printf("#%u ", byte);
-		}
-	}
-
-	puts("");
-}
-
 void newConnectionCb(int connId, const char * identifier){
 	PlaySound(dsradioSound);
 	printf("New Connection connId=%d identifier=%s\n", connId, identifier);
@@ -413,7 +399,7 @@ void newConnectionCb(int connId, const char * identifier){
 
 void newMessageCb(int connId, unsigned char * data, int datasize){
 	printf("New Message connId=%d: ", connId);
-	printMessage(data, datasize);
+	printData(data, datasize);
 	PlaySound(messageSound);
 }
 
@@ -424,13 +410,13 @@ void disconnectionCb(int connId){
 
 void newMessageCb2(int connId, unsigned char * data, int datasize){
 	printf("Client got New Message connId=%d: ", connId);
-	printMessage(data, datasize);
+	printData(data, datasize);
 	PlaySound(messageSound);
 }
 
 void newChunkCb(unsigned char * data, int datasize){
 	printf("Client got New Chunk: ");
-	printMessage(data, datasize);
+	printData(data, datasize);
 }
 
 void connectionSucceededCb(void){

@@ -24,6 +24,7 @@ OBJECTS = \
 	bresenham.o \
 	chunk.o \
 	network.o \
+	misc.o \
 	doodad.o
 
 EXE_NAME = game
@@ -32,8 +33,8 @@ $(EXE_NAME) : $(OBJECTS) main.o sqlite3.o libraylib.a libenet.a
 
 # implicit rules and compile action for .c files used here
 main.o : engine.h renderer.h physics.h loader.h bsod.h clocks.h
-renderer.o : raylib.h renderer.h linear.h bsod.h doodad.h chunk.h megaman.h network.h
-physics.o : doodad.h chunk.h linear.h
+renderer.o : raylib.h renderer.h linear.h bsod.h doodad.h chunk.h megaman.h network.h misc.h
+physics.o : doodad.h chunk.h linear.h misc.h
 loader.o : loader.h linear.h doodad.h chunk.h sqlite3.h
 doodad.o : doodad.h linear.h
 chunk.o : chunk.h floodfill.h
@@ -42,6 +43,7 @@ clocks.o : clocks.h
 bresenham.o : bresenham.h
 floodfill.o : floodfill.h
 network.o : network.h
+misc.o : misc.h
 
 # define a custom pattern rule to compile D files in the same way C files are
 #%.o : %.d ; $(DC) -fno-druntime -c $<

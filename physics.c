@@ -4,6 +4,7 @@
 #include <physics.h>
 
 #include <chunk.h>
+#include <misc.h>
 
 #include <math.h>
 #include <stdlib.h>
@@ -160,11 +161,6 @@ void physObject(struct Object *obj){
 		obj->vel = add(obj->vel, scale(1/60.0, acceleration));
 	}
 
-}
-
-double randf(){
-	int i = rand();
-	return (double) i / INT_MAX;
 }
 
 void addObject(){
