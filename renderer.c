@@ -948,6 +948,8 @@ void bsod(const char* finalMsg){
 
 	fprintf(stderr, "Final message: %s\n", finalMsg);
 
+	if (engine.headless) exit(1);
+
 	int scale = screen.UIscale;
 
 	int padding = scale * 100;
@@ -1000,7 +1002,7 @@ void bsod(const char* finalMsg){
 
 /* Enter the bsod loop but EndDrawing first. Usable inside renderer */
 void bsodED(const char* finalMsg){
-	EndDrawing();
+	if(engine.headless == false) EndDrawing();
 
 	bsod(finalMsg);
 }
