@@ -42,8 +42,8 @@ linear.o : linear.h
 clocks.o : clocks.h
 bresenham.o : bresenham.h
 floodfill.o : floodfill.h
-network.o : network.h
 misc.o : misc.h
+network.o : include/enet/enet.h network.h
 
 # define a custom pattern rule to compile D files in the same way C files are
 #%.o : %.d ; $(DC) -fno-druntime -c $<
@@ -82,12 +82,25 @@ sqlite3.o : sqlite3.c
 	$(CC) -c -Wall sqlite3.c
 
 
+vendor/enet :
+	mkdir -p vendor
+	git clone --depth=1 --branch=v1.3.17 https://github.com/lsalzman/enet.git vendor/enet/
+	cd vendor/enet/; autoreconf -vfi; ./configure && make
+
+libenet.a include/enet/enet.h &: vendor/enet
+	mkdir -p include
+	cp -r vendor/enet/include/enet include/
+	cp vendor/enet/.libs/libenet.a .
+
 clean :
 	rm -f $(EXE_NAME) main.o $(OBJECTS)
 	rm -f raylib.h rlgl.h libraylib.a
+	rm -f libenet.a
+	rm -rf include/enet/
 
 distclean : clean
 	rm -f sqlite3.c sqlite3.h
 	rm -f sqlite3.o
 	rm -rf vendor/sqlite3/
 	rm -rf vendor/raylib/
+	rm -rf vendor/enet/
