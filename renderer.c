@@ -111,7 +111,7 @@ vec2 updateMouse(){
 
 int initializeWindow(int w, int h, const char* title){
 
-	if(engine.headless) return 0;
+	if(!engine.graphical) return 0;
 
 	fprintf(stderr, "%s(%d) initializeWindow...\n", __FILE__, __LINE__);
 
@@ -156,6 +156,7 @@ static int F = 13;
 Sound callingSound;
 int stillCalling = 0;
 int callingTimer = 240;
+static bool clientEn = false;
 Sound wrongSound;
 Sound successSound;
 Sound closedSound;
@@ -165,7 +166,7 @@ Sound messageSound;
 
 int loadAssets(){
 
-	if(engine.headless) return 0;
+	if(!engine.graphical) return 0;
 
 	fprintf(stderr, "%s(%d) loadAssets...\n", __FILE__, __LINE__);
 
@@ -358,17 +359,19 @@ void leftClick(vec2 p, int down){
 
 	vec2 q = screenToWorld(p.x, p.y);
 
+	if(down){
+		struct Doodad * d = findDoodad(q);
+		if(d){ clickDoodad(d); return; }
+	}
+
 	if(down && tool == BLOCK_EDIT_TOOL){
 		puts("put block");
 		int i = REDUCE(q.x) + 128;
 		int j = REDUCE(q.y) + 128;
 		putBlock(i, j, blockChoice);
+		return;
 	}
 
-	if(down){
-		struct Doodad * d = findDoodad(q);
-		if(d){ clickDoodad(d); }
-	}
 }
 
 void rightClick(vec2 mouse, int down){
@@ -454,12 +457,16 @@ void connectionSucceededCb(void){
 	StopSound(callingSound);
 	PlaySound(successSound);
 	stillCalling = 0;
+	callingTimer = 240;
+	engine.networkStatus = CLIENT;
 	printf("connection succeeded\n");
 }
 
 void connectionFailedCb(int error){
 	StopSound(callingSound);
 	stillCalling = 0;
+	callingTimer = 240;
+	engine.networkStatus = OFFLINE;
 	PlaySound(wrongSound);
 	printf("connection failed\n");
 }
@@ -467,13 +474,15 @@ void connectionFailedCb(int error){
 void connectionClosedCb(void){
 	StopSound(callingSound);
 	stillCalling = 0;
+	clientEn = false;
+	engine.networkStatus = OFFLINE;
 	PlaySound(closedSound);
 	printf("connection closed\n");
 }
 
 
 
-int enableDedicated(){
+int enableServer(){
 	struct NetworkCallbacks1 serverCallbacks = {
 		newConnectionCb,
 		newMessageCb,
@@ -481,44 +490,35 @@ int enableDedicated(){
 	};
 
 	puts("Host Game ...");
-	int status = enableServer(engine.serverPort, serverCallbacks);
+	int status = netEnableServer(engine.serverPort, serverCallbacks);
 	if(status < 0)  return -1;
 
-	engine.multiplayerEnabled = true;
-	engine.multiplayerRole = SERVER;
+	engine.networkStatus = SERVER;
 	puts("... Server Online");
+	if(engine.graphical) PlaySound(grantedSound);
 	return 0;
 }
 
 void pressH(){
 
-	int status;
-
-	if(engine.multiplayerEnabled && engine.multiplayerRole == SERVER){
-		disableServer();
-		engine.multiplayerEnabled = false;
+	switch (engine.networkStatus) {
+	case SERVER:
+		netDisableServer();
 		fprintf(stderr, "Server terminated\n");
 		PlaySound(closedSound);
-	}
-	else if(engine.multiplayerEnabled){
-		fprintf(stderr, "You're in the middle of a multiplayer game\n");
-	}
-	else{
-
-		struct NetworkCallbacks1 serverCallbacks = {
-			newConnectionCb,
-			newMessageCb,
-			disconnectionCb
-		};
-
-		puts("Host Game ...");
-		status = enableServer(engine.serverPort, serverCallbacks);
-		if(status < 0) return;
-
-		engine.multiplayerEnabled = true;
-		engine.multiplayerRole = SERVER;
-		puts("... Server Online");
-		PlaySound(grantedSound);
+		engine.networkStatus = OFFLINE;
+		break;
+	case CONNECTING:
+		fprintf(stderr, "Connection in progress\n");
+		PlaySound(wrongSound);
+		break;
+	case CLIENT:
+		fprintf(stderr, "You're in the middle of a multiplayer game already\n");
+		PlaySound(wrongSound);
+		break;
+	case OFFLINE:
+		enableServer();
+		break;
 	}
 
 }
@@ -528,8 +528,23 @@ void pressN(){
 }
 
 void pressC(){
-	static bool clientEn = false;
-	if(!clientEn){
+
+	switch (engine.networkStatus) {
+	case SERVER:
+		fprintf(stderr, "You're hosting a game. Shutdown the server first\n");
+		PlaySound(wrongSound);
+		break;
+	case CLIENT:
+	case CONNECTING:
+		disconnectFromServer();
+		PlaySound(closedSound);
+		StopSound(callingSound);
+		engine.networkStatus = OFFLINE;
+		callingTimer = 240;
+		stillCalling = 0;
+		clientEn = false;
+		break;
+	case OFFLINE:
 		struct NetworkCallbacks2 clientCallbacks = {
 			.csc = connectionSucceededCb,
 			.cfc = connectionFailedCb,
@@ -537,17 +552,13 @@ void pressC(){
 			.nmc = newMessageCb2,
 			.nchc = newChunkCb,
 		};
-		int status = connectToServer(engine.serverHostname, 12345, clientCallbacks);
+		int status = connectToServer(engine.serverHostname, engine.serverPort, clientCallbacks);
 		if(status < 0) return;
 		clientEn = true;
-
 		PlaySound(callingSound);
 		stillCalling = 1;
-	}
-	else{
-		disconnectFromServer();
-		clientEn = false;
-		PlaySound(closedSound);
+		engine.networkStatus = CONNECTING;
+		break;
 	}
 }
 
@@ -560,7 +571,6 @@ void pressL(){
 }
 
 void pressG(){
-	//addObject();
 	unsigned char msg[] = "HELLO WORLD\n";
 	int status = sendMessage(msg, sizeof msg);
 	if(status < 0){
@@ -573,6 +583,7 @@ void pressPause(){
 }
 
 void pressR(){
+	addObject();
 	showRooms();
 
 	for(struct Doodad *d = doodads; d < doodads_ptr; d++) printDoodad(d);
@@ -599,12 +610,6 @@ void holdUpDownArrow(vec2 mouse, int updown){
 
 
 void pressP(){
-	double p = getPingTime();
-
-	printf("ping = %lf\n", p);
-
-	return;
-
 	double t = chronf();
 	struct Ping ping = {0, t};
 	unsigned char buf[1024];
@@ -623,7 +628,7 @@ void pressP(){
 
 void dispatchInput(){
 
-	if(engine.headless) return;
+	if(!engine.graphical) return;
 
 	// mouse
 	vec2 mouse_prev = screen.mouse;
@@ -826,6 +831,15 @@ void renderPressureOverlay(){
 }
 
 
+const char * netstatusToString(int status){
+	switch (status) {
+	case SERVER: return "SERVER";
+	case CLIENT: return "CLIENT";
+	case CONNECTING: return "CONNECTING";
+	case OFFLINE: return "OFFLINE";
+	default: return "badval";
+	}
+}
 
 
 
@@ -879,6 +893,15 @@ void drawMegaman(vec2 p, int flip){
 	drawSpriteBase(mmtex, p, flip);
 }
 
+
+void renderSwap(){
+	SwapScreenBuffer();
+}
+
+void renderPollInput(){
+	PollInputEvents();
+}
+
 void rerenderEverything(){
 
 	if(stillCalling){
@@ -889,7 +912,7 @@ void rerenderEverything(){
 		}
 	}
 
-	if(engine.headless) return;
+	if(!engine.graphical) return;
 
 	BeginDrawing();
 
@@ -917,6 +940,7 @@ void rerenderEverything(){
 	//drawUISprite(statstex, db_config.stats_pos_x, screen_h - db_config.stats_pos_y, 2.0);
 
 	/* doodads */
+	for(struct Doodad *doodad = doodads; doodad < doodads_ptr; doodad++){ drawDoodad(doodad); }
 	for(struct Object *obj = objects; obj < objects_ptr; obj++){ drawObject(obj); }
 
 	/* * debug text * */
@@ -927,6 +951,7 @@ void rerenderEverything(){
 	DrawText(TextFormat("TimeOffset = %lf", engine.timeOffset), 1, 50, 10, BLACK);
 	DrawText(TextFormat("Paused = %d", engine.paused), 1, 60, 10, BLACK);
 	DrawText(TextFormat("FrameNo = %d", engine.frameNumber), 1, 70, 10, BLACK);
+	DrawText(TextFormat("NetStatus = %s", netstatusToString(engine.networkStatus)), 1, 80, 10, BLACK);
 
 	//renderPressureOverlay();
 	//renderRoomOverlay();
@@ -938,8 +963,8 @@ void rerenderEverything(){
 
 void shutdownEverything(){
 	disconnectFromServer();
-	disableServer();
-	if(engine.headless) return;
+	netDisableServer();
+	if(!engine.graphical) return;
 	CloseWindow();
 }
 
@@ -948,7 +973,7 @@ void bsod(const char* finalMsg){
 
 	fprintf(stderr, "Final message: %s\n", finalMsg);
 
-	if (engine.headless) exit(1);
+	if (!engine.graphical) exit(1);
 
 	int scale = screen.UIscale;
 
@@ -1002,7 +1027,7 @@ void bsod(const char* finalMsg){
 
 /* Enter the bsod loop but EndDrawing first. Usable inside renderer */
 void bsodED(const char* finalMsg){
-	if(engine.headless == false) EndDrawing();
+	if(engine.graphical == true) EndDrawing();
 
 	bsod(finalMsg);
 }
@@ -1012,8 +1037,6 @@ void bsodN(const char* finalMsg){
 	fprintf(stderr, "Final message: %s\n", finalMsg);
 	exit(1);
 }
-
-
 
 
 

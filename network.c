@@ -94,7 +94,7 @@ static double currentTime(){
 */
 
 
-int enableServer(int port, struct NetworkCallbacks1 cbs) {
+int netEnableServer(int port, struct NetworkCallbacks1 cbs) {
 
 	int status = ensureEnetInitialized(); if (status < 0) return -1;
 
@@ -161,7 +161,7 @@ int connectToServer(const char * hostname, int port, struct NetworkCallbacks2 cb
 	return 0;
 }
 
-void disableServer() {
+void netDisableServer() {
 	if (server.enabled == false) return;
 
 	for (int i = 0; i < MAX_CONNECTIONS; i++) {
@@ -382,13 +382,12 @@ void pollNetwork() {
 
 }
 
-void pollNetworkDedicated() {
+void pollNetworkTimeout(int ms) {
 
-	if (client.enabled) pollClient(1000);
-	if (server.enabled) pollServer(1000);
+	if (client.enabled) pollClient(ms);
+	if (server.enabled) pollServer(ms);
 
 }
-
 
 
 

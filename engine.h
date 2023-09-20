@@ -4,11 +4,14 @@ struct Engine {
 	double serverTime;
 	double localTime;
 	double timeOffset;
-	bool multiplayerEnabled;
-	bool headless;
-	enum {SERVER, CLIENT} multiplayerRole;
+	bool graphical;
+	bool dedicated;
 	char serverHostname[1024];
 	int serverPort;
+	bool shouldClose;
+	bool inputFresh;
+
+	enum {OFFLINE, SERVER, CLIENT, CONNECTING} networkStatus;
 };
 
 extern struct Engine engine;

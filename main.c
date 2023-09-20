@@ -3,6 +3,8 @@
 #include <signal.h>
 #include <errno.h>
 
+#include <unistd.h>
+
 #include <stdio.h>
 #include <string.h>   // strcpy
 #include <stdbool.h>
@@ -16,58 +18,131 @@
 #include <clocks.h>   // chron, chronf, setStartTime
 #include <network.h>  // pollNetwork
 
+#include <math.h>
+
+#include <threads.h>
 
 struct Engine engine;
+mtx_t masterLock;
+thrd_t mainThread;
+
+int highestUpdateCompleted = -1;
+int updateCounter = 0;
+
+
+
+int mainThreadProc(void* u){
+
+	double updateZeroTime = chronf();
+
+	for (;;) {
+		mtx_lock(&masterLock);
+
+		engine.localTime = chronf();
+		engine.serverTime = engine.localTime + engine.timeOffset;
+
+		if(engine.inputFresh) { dispatchInput(); engine.inputFresh = false; }
+
+		int updates = floor((engine.localTime - updateZeroTime) * 60.0);
+		int missedUpdates = updates - highestUpdateCompleted;
+
+		for(int i = 0; i < missedUpdates; i++){
+			physics();
+			engine.frameNumber++;
+		}
+
+		highestUpdateCompleted = updates;
+
+		mtx_unlock(&masterLock);
+
+		if (engine.shouldClose) return 0;
+
+		if(engine.networkStatus == OFFLINE) usleep(1000);
+		else pollNetworkTimeout(3);
+	}
+
+}
+
+int graphicsThreadProc(void *u){
+	for(;;){
+		mtx_lock(&masterLock);
+		rerenderEverything();
+		renderPollInput(); engine.inputFresh = true;
+		mtx_unlock(&masterLock);
+
+		if(windowShouldClose()) { engine.shouldClose = 1; return 0; }
+		renderSwap();
+	}
+}
+
+void sigintHandler(int sig){
+	engine.shouldClose = true;
+}
+
 
 int main(int argc, char* argv[]){
 
 	setStartTime(chron());
 
+	engine.shouldClose = false;
 	engine.paused = true;
 	engine.frameNumber = 0;
 	engine.timeOffset = 0;
 	engine.localTime = chronf();
 	engine.serverTime = engine.localTime;
-	engine.multiplayerEnabled = false;
-	engine.multiplayerRole = SERVER;
-	engine.serverPort = 12345;
+	engine.dedicated = false;
 	strcpy(engine.serverHostname, "localhost");
-	if(argc > 1){ strcpy(engine.serverHostname, argv[1]); }
+	engine.serverPort = 12345;
+	engine.networkStatus = OFFLINE;
 
 	int width  = 1920 / 2;
 	int height = 1080 / 2;
 
-	const char workspace[] = "workspace.db";
+	for (int i = 1; i < argc; i++) {
+		if (strcmp(argv[i], "-d") == 0) { engine.dedicated = true; continue; }
+		if (strcmp(argv[i], "-p") == 0 && i+1 < argc) { engine.serverPort = atoi(argv[i+1]); i++; continue; }
+		if (strcmp(argv[i], "--window") == 0 && i+1 < argc) { sscanf(argv[i+1], "%dx%d", &width, &height); i++; continue; }
+		strcpy(engine.serverHostname, argv[i]);
+	}
+
+	engine.graphical = engine.dedicated ? false : true;
+
+	printf("server host = %s\n", engine.serverHostname);
+	printf("server port = %d\n", engine.serverPort);
+	printf("dedicated = %d\n", engine.dedicated);
 
 	int status;
 
-	status = loadConfig(stderr, "config.db");         if(status < 0){ bsodN("loadConfig failed"); }
-	status = initializeWindow(width, height, "GAME"); if(status < 0){ bsodN("initializeWindow failed"); }
-	status = loadAssets();                            if(status < 0){ bsod("loadAssets failed"); }
-	status = loadWorkspace(stderr, workspace);        if(status < 0){ bsod("loadWorkspace failed"); }
+	if(engine.graphical){
+		status = initializeWindow(width, height, "GAME");    if(status < 0){ bsodN("NO GRAPHICS"); }
+		status = loadAssets();                               if(status < 0){ bsod("NO ASSETS"); }
+	}
+	else {
+		struct sigaction sa = { .sa_handler = sigintHandler, .sa_flags = 0 };
+		sigemptyset(&sa.sa_mask);
+		status = sigaction(SIGINT, &sa, NULL);               if(status < 0){ bsodN("NO SIGINT"); }
+	}
+
+	status = loadWorkspace(stderr, "workspace.db");          if(status < 0){ bsod("NO WORKSPACE.DB"); }
 
 	initializeEverything();
 
-	for(;;){
-		engine.localTime = chronf();
-		engine.serverTime = engine.localTime + engine.timeOffset;
+	status = mtx_init(&masterLock, mtx_plain);               if(status < 0){ bsod("NO MASTER LOCK"); }
 
-		rerenderEverything();
-		dispatchInput();
+	status = thrd_create(&mainThread, mainThreadProc, NULL); if(status < 0){ bsod("NO THREAD"); }
 
-		pollNetwork();
-
-		if(engine.paused == false) physics();
-
-		if(windowShouldClose()) break;
-
-		if(engine.paused == false) engine.frameNumber++;
+	if(engine.graphical) {
+		graphicsThreadProc(NULL);
+	}
+	else {
+		status = enableServer();                             if(status < 0){ bsod("NO SERVER"); }
 	}
 
-	status = saveWorkspace(stderr, workspace);
-	if(status < 0){
-		bsod("(bug) saveWorkspace failed");
-	}
+	thrd_join(mainThread, 0);
+
+	mtx_destroy(&masterLock);
+
+	status = saveWorkspace(stderr, "workspace.db"); if(status < 0){ bsod("saveWorkspace failed"); }
 
 	shutdownEverything();
 

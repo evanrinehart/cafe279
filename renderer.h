@@ -13,4 +13,9 @@ void shutdownEverything();
 
 
 
-int enableDedicated();
+int enableServer();
+
+
+
+void renderPollInput();
+void renderSwap();
