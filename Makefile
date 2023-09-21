@@ -52,11 +52,11 @@ floodfill.o : include/floodfill.h
 messages.o :  include/messages.h
 misc.o :      include/misc.h
 renderer.o :  $(addprefix include/, raylib.h linear.h engine.h doodad.h megaman.h chunk.h renderer.h bsod.h physics.h sound.h brain.h)
-nullrenderer.o :
 sound.o :     $(addprefix include/, raylib.h sound.h)
-nullsound.o : $(addprefix include/, sound.h)
 loader.o :    $(addprefix include/, loader.h sqlite3.h linear.h doodad.h megaman.h chunk.h)
 network.o :   $(addprefix include/, enet/enet.h network.h)
+nullsound.o : $(addprefix include/, sound.h)
+nullrenderer.o :
 
 # define a custom pattern rule to compile D files in the same way C files are
 #%.o : %.d ; $(DC) -fno-druntime -c $<

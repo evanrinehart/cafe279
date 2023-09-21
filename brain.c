@@ -226,12 +226,6 @@ void pressP(){
 	int size = unparsePing(&ping, buf, 1024);
 	int e = sendMessage(buf, size);
 	if(e<0){ printf("ping failed to send\n"); return; }
-
-	double timeout = t + 0.250;
-
-	while(chronf() < timeout){
-		pollNetwork();
-	}
 }
 
 // do one update to the world
