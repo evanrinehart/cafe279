@@ -37,8 +37,8 @@ int floodRoom(int i, int j, void* u, int (*visit)(void*, int, int)){
 	return flood(i, j, chunk.room_edges_h, chunk.room_edges_v, u, visit);
 }
 
-static int mark_as_outside(void* unused, int i, int j){ chunk.room[i][j] = 1; return 0; }
-static int mark_as_room_id(void* unused, int i, int j){ chunk.room[i][j] = highest_room_id; return 0; }
+static int mark_as_outside(void* u, int i, int j){ chunk.room[i][j] = 1; return 0; }
+static int mark_as_room_id(void* u, int i, int j){ chunk.room[i][j] = highest_room_id; return 0; }
 
 // right after generating map, initialize the rooms
 // only blocks will be defined
@@ -137,7 +137,10 @@ int isOutside(int i, int j){ return floodAtmosphere(i, j, NULL, outside_test_vis
 // Volume measuring, respect room boundary or not
 int volume_counter;
 
-int counting_visitor(void* u, int i, int j){ volume_counter++; return 0; }
+int counting_visitor(void* u, int i, int j){
+	volume_counter++;
+	return 0;
+}
 
 int measureCavity(int i, int j){
 	volume_counter = 0;

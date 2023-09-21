@@ -11,8 +11,8 @@ CFLAGS = \
 	-Werror \
 	-pedantic \
 	-Wno-error=unused-variable \
-	-Wno-error=unused-parameter \
-	-Wno-error=unused-function \
+	-Wno-unused-parameter \
+	-Wno-unused-function \
 	-Wno-error=unused-but-set-variable
 
 LIBS = -lm -lrt -lpthread -ldl
