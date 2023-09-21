@@ -1,13 +1,15 @@
 /* MAIN.C */
+#include <stdio.h>
 #include <stdlib.h>
-#include <signal.h>
-#include <errno.h>
+#include <string.h>
+#include <stdbool.h>
+
+#include <math.h>
 
 #include <unistd.h>
+#include <signal.h>
 
-#include <stdio.h>
-#include <string.h>   // strcpy
-#include <stdbool.h>
+#include <threads.h>
 
 #include <linear.h>
 #include <renderer.h> // ...
@@ -18,21 +20,80 @@
 #include <clocks.h>   // chron, chronf, setStartTime
 #include <network.h>  // pollNetwork
 
-#include <math.h>
-
-#include <threads.h>
-
 struct Engine engine;
-mtx_t masterLock;
-thrd_t mainThread;
 
-int highestUpdateCompleted = -1;
-int updateCounter = 0;
+static mtx_t masterLock;
+static thrd_t mainThread;
 
+int mainThreadProc(void* u);
+int graphicsThreadProc(void *u);
+
+int main(int argc, char* argv[]){
+
+	setStartTime(chron());
+
+	engine.shouldClose = false;
+	engine.paused = true;
+	engine.frameNumber = 0;
+	engine.timeOffset = 0;
+	engine.localTime = chronf();
+	engine.serverTime = engine.localTime;
+	engine.dedicated = false;
+	strcpy(engine.serverHostname, "localhost");
+	engine.serverPort = 12345;
+	engine.networkStatus = OFFLINE;
+
+	int width  = 1920 / 2;
+	int height = 1080 / 2;
+
+	for (int i = 1; i < argc; i++) {
+		if (strcmp(argv[i], "-d") == 0) { engine.dedicated = true; continue; }
+		if (strcmp(argv[i], "-p") == 0 && i+1 < argc) { engine.serverPort = atoi(argv[i+1]); i++; continue; }
+		if (strcmp(argv[i], "--window") == 0 && i+1 < argc) { sscanf(argv[i+1], "%dx%d", &width, &height); i++; continue; }
+		strcpy(engine.serverHostname, argv[i]);
+	}
+
+	engine.graphical = engine.dedicated ? false : true;
+
+	int status;
+
+	if (engine.graphical) {
+		status = initializeWindow(width, height, "GAME");    if (status < 0) bsodN("NO GRAPHICS");
+		status = loadAssets();                               if (status < 0) bsod("NO ASSETS");
+	}
+	else {
+		// rely on SIGINT to end the program without graphical UI
+		void sigintHandler(int sig){ engine.shouldClose = true; }
+		struct sigaction sa = { .sa_handler = sigintHandler, .sa_flags = 0 };
+		sigemptyset(&sa.sa_mask);
+		status = sigaction(SIGINT, &sa, NULL);               if (status < 0) bsodN("NO SIGINT");
+	}
+
+	status = loadWorkspace(stderr, "workspace.db");          if (status < 0) bsod("NO WORKSPACE.DB");
+	initializeEverything();
+	status = mtx_init(&masterLock, mtx_plain);               if (status < 0) bsod("NO MASTER LOCK");
+	status = thrd_create(&mainThread, mainThreadProc, NULL); if (status < 0) bsod("NO THREAD");
+
+	if(engine.graphical) {
+		graphicsThreadProc(NULL);
+	}
+	else {
+		status = enableServer();                             if (status < 0) bsod("NO SERVER");
+	}
+
+	thrd_join(mainThread, 0);
+	mtx_destroy(&masterLock);
+	status = saveWorkspace(stderr, "workspace.db");          if (status < 0) bsod("saveWorkspace failed");
+	shutdownEverything();
+
+	return 0;
+
+}
 
 
 int mainThreadProc(void* u){
 
+	int highestUpdateCompleted = -1;
 	double updateZeroTime = chronf();
 
 	for (;;) {
@@ -73,79 +134,4 @@ int graphicsThreadProc(void *u){
 		if(windowShouldClose()) { engine.shouldClose = 1; return 0; }
 		renderSwap();
 	}
-}
-
-void sigintHandler(int sig){
-	engine.shouldClose = true;
-}
-
-
-int main(int argc, char* argv[]){
-
-	setStartTime(chron());
-
-	engine.shouldClose = false;
-	engine.paused = true;
-	engine.frameNumber = 0;
-	engine.timeOffset = 0;
-	engine.localTime = chronf();
-	engine.serverTime = engine.localTime;
-	engine.dedicated = false;
-	strcpy(engine.serverHostname, "localhost");
-	engine.serverPort = 12345;
-	engine.networkStatus = OFFLINE;
-
-	int width  = 1920 / 2;
-	int height = 1080 / 2;
-
-	for (int i = 1; i < argc; i++) {
-		if (strcmp(argv[i], "-d") == 0) { engine.dedicated = true; continue; }
-		if (strcmp(argv[i], "-p") == 0 && i+1 < argc) { engine.serverPort = atoi(argv[i+1]); i++; continue; }
-		if (strcmp(argv[i], "--window") == 0 && i+1 < argc) { sscanf(argv[i+1], "%dx%d", &width, &height); i++; continue; }
-		strcpy(engine.serverHostname, argv[i]);
-	}
-
-	engine.graphical = engine.dedicated ? false : true;
-
-	printf("server host = %s\n", engine.serverHostname);
-	printf("server port = %d\n", engine.serverPort);
-	printf("dedicated = %d\n", engine.dedicated);
-
-	int status;
-
-	if(engine.graphical){
-		status = initializeWindow(width, height, "GAME");    if(status < 0){ bsodN("NO GRAPHICS"); }
-		status = loadAssets();                               if(status < 0){ bsod("NO ASSETS"); }
-	}
-	else {
-		struct sigaction sa = { .sa_handler = sigintHandler, .sa_flags = 0 };
-		sigemptyset(&sa.sa_mask);
-		status = sigaction(SIGINT, &sa, NULL);               if(status < 0){ bsodN("NO SIGINT"); }
-	}
-
-	status = loadWorkspace(stderr, "workspace.db");          if(status < 0){ bsod("NO WORKSPACE.DB"); }
-
-	initializeEverything();
-
-	status = mtx_init(&masterLock, mtx_plain);               if(status < 0){ bsod("NO MASTER LOCK"); }
-
-	status = thrd_create(&mainThread, mainThreadProc, NULL); if(status < 0){ bsod("NO THREAD"); }
-
-	if(engine.graphical) {
-		graphicsThreadProc(NULL);
-	}
-	else {
-		status = enableServer();                             if(status < 0){ bsod("NO SERVER"); }
-	}
-
-	thrd_join(mainThread, 0);
-
-	mtx_destroy(&masterLock);
-
-	status = saveWorkspace(stderr, "workspace.db"); if(status < 0){ bsod("saveWorkspace failed"); }
-
-	shutdownEverything();
-
-	return 0;
-
 }
