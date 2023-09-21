@@ -42,12 +42,12 @@ $(EXE_NAME)-nogfx : $(OBJECTS) nullrenderer.o nullsound.o sqlite3.o libenet.a
 
 # implicit rules and compile action for .c files used here
 main.o : engine.h renderer.h brain.h physics.h loader.h bsod.h clocks.h
-renderer.o : raylib.h brain.h sound.h renderer.h linear.h bsod.h doodad.h chunk.h megaman.h
+renderer.o : include/raylib.h brain.h sound.h renderer.h linear.h bsod.h doodad.h chunk.h megaman.h
 nullrenderer.o :
-sound.o : raylib.h sound.h
+sound.o : include/raylib.h sound.h
 nullsound.o : sound.h
 physics.o : doodad.h chunk.h linear.h misc.h
-loader.o : loader.h linear.h doodad.h chunk.h sqlite3.h
+loader.o : loader.h linear.h doodad.h chunk.h include/sqlite3.h
 doodad.o : doodad.h linear.h
 chunk.o : chunk.h floodfill.h
 linear.o : linear.h
@@ -76,9 +76,9 @@ libraylib.a : vendor/raylib
 	$(MAKE) -C vendor/raylib/src
 	cp vendor/raylib/src/libraylib.a .
 
-raylib.h rlgl.h &: vendor/raylib
-	cp vendor/raylib/src/raylib.h .
-	cp vendor/raylib/src/rlgl.h .
+include/raylib.h include/rlgl.h &: vendor/raylib
+	cp vendor/raylib/src/raylib.h include/
+	cp vendor/raylib/src/rlgl.h include/
 
 SQLITE_NAME = sqlite-amalgamation-3430000
 SQLITE_PATH = vendor/sqlite3/$(SQLITE_NAME)
@@ -90,9 +90,9 @@ vendor/sqlite3 :
 	wget -P vendor/sqlite3/ $(SQLITE_URL)
 	unzip vendor/sqlite3/$(SQLITE_NAME).zip -d vendor/sqlite3/
 
-sqlite3.h sqlite3.c &: vendor/sqlite3
+include/sqlite3.h sqlite3.c &: vendor/sqlite3
 	cp vendor/sqlite3/$(SQLITE_NAME)/sqlite3.c .
-	cp vendor/sqlite3/$(SQLITE_NAME)/sqlite3.h .
+	cp vendor/sqlite3/$(SQLITE_NAME)/sqlite3.h include/
 
 sqlite3.o : sqlite3.c
 	$(CC) -c -Wall -Wextra -pedantic sqlite3.c
@@ -112,13 +112,15 @@ clean :
 	rm -f $(EXE_NAME) $(EXE_NAME)-nogfx
 	rm -f $(OBJECTS)
 	rm -f renderer.o nullrenderer.o sound.o nullsound.o
-	rm -f raylib.h rlgl.h libraylib.a
-	rm -f libenet.a
-	rm -rf include/enet/
+	rm -f libraylib.a libenet.a
+	rm -rf include/enet
+	rm -rf include/raylib.h
+	rm -rf include/rlgl.h
 
 distclean : clean
-	rm -f sqlite3.c sqlite3.h
+	rm -f sqlite3.c
 	rm -f sqlite3.o
+	rm -rf include/sqlite3.h
 	rm -rf vendor/sqlite3/
 	rm -rf vendor/raylib/
 	rm -rf vendor/enet/
