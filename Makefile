@@ -25,7 +25,6 @@ OBJECTS = \
 	clocks.o \
 	physics.o \
 	floodfill.o \
-	bresenham.o \
 	chunk.o \
 	network.o \
 	misc.o \
