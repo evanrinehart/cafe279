@@ -12,13 +12,13 @@ CFLAGS = \
 	-Wno-error=unused-function \
 	-Wno-error=unused-but-set-variable
 
-LIBS = -lGL -lm -lrt -lX11
+LIBS = -lm -lrt
 
 OBJECTS = \
+	main.o \
 	linear.o \
 	loader.o \
 	clocks.o \
-	renderer.o \
 	physics.o \
 	floodfill.o \
 	bresenham.o \
@@ -29,12 +29,17 @@ OBJECTS = \
 	doodad.o
 
 EXE_NAME = game
-$(EXE_NAME) : $(OBJECTS) main.o sqlite3.o libraylib.a libenet.a
-	gcc -o $(EXE_NAME) $(OBJECTS) main.o sqlite3.o libraylib.a libenet.a $(LIBS)
+
+$(EXE_NAME) : $(OBJECTS) renderer.o sqlite3.o libraylib.a libenet.a
+	gcc -o $(EXE_NAME) $(OBJECTS) renderer.o sqlite3.o libraylib.a libenet.a $(LIBS) -lGL -lX11
+
+$(EXE_NAME)-nogfx : $(OBJECTS) rendnull.o sqlite3.o libenet.a
+	gcc -o $(EXE_NAME)-nogfx $(OBJECTS) rendnull.o sqlite3.o libenet.a $(LIBS)
 
 # implicit rules and compile action for .c files used here
 main.o : engine.h renderer.h physics.h loader.h bsod.h clocks.h
 renderer.o : raylib.h renderer.h linear.h bsod.h doodad.h chunk.h megaman.h network.h misc.h
+rendnull.o : renderer.h linear.h bsod.h chunk.h megaman.h network.h misc.h
 physics.o : doodad.h chunk.h linear.h misc.h
 loader.o : loader.h linear.h doodad.h chunk.h sqlite3.h
 doodad.o : doodad.h linear.h
@@ -97,7 +102,9 @@ libenet.a include/enet/enet.h &: vendor/enet
 	cp vendor/enet/.libs/libenet.a .
 
 clean :
-	rm -f $(EXE_NAME) main.o $(OBJECTS)
+	rm -f $(EXE_NAME) $(EXE_NAME)-nogfx
+	rm -f $(OBJECTS)
+	rm -f renderer.o rendnull.o
 	rm -f raylib.h rlgl.h libraylib.a
 	rm -f libenet.a
 	rm -rf include/enet/

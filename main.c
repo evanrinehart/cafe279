@@ -103,6 +103,12 @@ int mainThreadProc(void* u){
 	int highestUpdateCompleted = -1;
 	double updateZeroTime = chronf();
 
+	if (engine.graphical == false)
+		puts("Game built without graphics. Press Ctrl-C to exit game.");
+
+	if (engine.graphical == false && engine.dedicated == false)
+		puts("Server not running. Run game with -d for dedicated server.");
+
 	for (;;) {
 		mtx_lock(&masterLock);
 
