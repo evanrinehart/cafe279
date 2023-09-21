@@ -69,6 +69,21 @@ cleanup:
 	return status;
 }
 
+typedef void (*funcPtr)(void);
+
+int withStatementExF(funcPtr u, sqlite3 *db, const char *sql, int (*proc)(funcPtr u, sqlite3 *db, sqlite3_stmt *stmt)){
+	int status, error;
+	sqlite3_stmt *stmt;
+	error = sqlite3_prepare(db, sql, -1, &stmt, NULL);
+	if(error){
+		PRINT_SQL_ERROR(db);
+		return -1;
+	}
+	status = proc(u, db, stmt);
+	sqlite3_finalize(stmt);
+	return status;
+}
+
 int withStatementEx(void* u, sqlite3 *db, const char *sql, int (*proc)(void* u, sqlite3 *db, sqlite3_stmt *stmt)){
 	int status, error;
 	sqlite3_stmt *stmt;
@@ -82,17 +97,18 @@ int withStatementEx(void* u, sqlite3 *db, const char *sql, int (*proc)(void* u, 
 	return status;
 }
 
-int simpleWrapper(void * u, sqlite3 *db, sqlite3_stmt *stmt){
-	int (*proc)(sqlite3 *db, sqlite3_stmt *stmt) = u;
+
+int simpleWrapper(funcPtr u, sqlite3 *db, sqlite3_stmt *stmt){
+	int (*proc)(sqlite3 *db, sqlite3_stmt *stmt) = (int (*)(sqlite3 *, sqlite3_stmt *))u;
 	return proc(db, stmt);
 }
 
 int withStatement(sqlite3 *db, const char *sql, int (*proc)(sqlite3 *db, sqlite3_stmt *stmt)){
-	return withStatementEx(proc, db, sql, simpleWrapper);
+	return withStatementExF((funcPtr)proc, db, sql, simpleWrapper);
 }
 
-int iterator(void* u, sqlite3 *db, sqlite3_stmt *stmt){
-	int (*proc)(sqlite3_stmt *stmt) = u;
+int iterator(funcPtr u, sqlite3 *db, sqlite3_stmt *stmt){
+	int (*proc)(sqlite3_stmt *stmt) = (int (*)(sqlite3_stmt *))u;
 	for(;;){
 		switch(sqlite3_step(stmt)){
 			case SQLITE_ROW:
@@ -108,7 +124,7 @@ int iterator(void* u, sqlite3 *db, sqlite3_stmt *stmt){
 }
 
 int withEachRow(sqlite3 *db, const char *sql, int (*proc)(sqlite3_stmt *stmt)){
-	return withStatementEx(proc, db, sql, iterator);
+	return withStatementExF((funcPtr)proc, db, sql, iterator);
 }
 
 

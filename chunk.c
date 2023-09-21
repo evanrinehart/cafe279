@@ -37,6 +37,9 @@ int floodRoom(int i, int j, void* u, int (*visit)(void*, int, int)){
 	return flood(i, j, chunk.room_edges_h, chunk.room_edges_v, u, visit);
 }
 
+static int mark_as_outside(void* unused, int i, int j){ chunk.room[i][j] = 1; return 0; }
+static int mark_as_room_id(void* unused, int i, int j){ chunk.room[i][j] = highest_room_id; return 0; }
+
 // right after generating map, initialize the rooms
 // only blocks will be defined
 void initializeRooms(){
@@ -54,7 +57,6 @@ void initializeRooms(){
 	LOOP256(i, j) refreshAtmoEdges(i,j);
 
 	// if -1 is found on the border flood it with 1 (outside)
-	int mark_as_outside(void* unused, int i, int j){ chunk.room[i][j] = 1; return 0; }
 
 	LOOP256(i, j) {
 		if ((i==0 || j==0 || i==255 || j==255) && chunk.room[i][j] == -1) {
@@ -62,7 +64,6 @@ void initializeRooms(){
 		}
 	}
 
-	int mark_as_room_id(void* unused, int i, int j){ chunk.room[i][j] = highest_room_id; return 0; }
 
 	// if -1 is found now, it's inside, make it a room
 	LOOP256(i, j) {

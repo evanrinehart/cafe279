@@ -69,7 +69,7 @@ int main(int argc, char* argv[]){
 	}
 	else {
 		// rely on SIGINT to end the program without graphical UI
-		void sigintHandler(int sig){ engine.shouldClose = true; }
+		void sigintHandler(int sig);
 		struct sigaction sa = { .sa_handler = sigintHandler, .sa_flags = 0 };
 		sigemptyset(&sa.sa_mask);
 		status = sigaction(SIGINT, &sa, NULL);               if (status < 0) bsod("NO SIGINT");
@@ -159,3 +159,6 @@ int graphicsThreadProc(void *u){
 
 	return 0;
 }
+
+
+void sigintHandler(int sig){ engine.shouldClose = true; }

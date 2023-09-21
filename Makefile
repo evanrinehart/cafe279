@@ -95,7 +95,7 @@ sqlite3.h sqlite3.c &: vendor/sqlite3
 	cp vendor/sqlite3/$(SQLITE_NAME)/sqlite3.h .
 
 sqlite3.o : sqlite3.c
-	$(CC) -c -Wall sqlite3.c
+	$(CC) -c -Wall -Wextra -pedantic sqlite3.c
 
 
 vendor/enet :

@@ -66,7 +66,7 @@ static Texture errorIcon;
 vec2 camera = {0,0};
 double zoom = 1;
 
-enum Symbol overlayMode;
+enum Overlay overlayMode;
 
 int mouse_buttons[10];
 
@@ -140,7 +140,7 @@ int loadAssets(){
 	fprintf(stderr, "%s(%d) loadAssets...\n", __FILE__, __LINE__);
 
 	FilePathList fpl = LoadDirectoryFiles("assets/icons");
-	for (int i = 0; i < fpl.count; i++) {
+	for (unsigned i = 0; i < fpl.count; i++) {
 		//icons[i] = LoadTexture(fpl.paths[i]);
 		icon_count++;
 	}
