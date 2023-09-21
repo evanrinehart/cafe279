@@ -134,6 +134,8 @@ int initializeWindow(int w, int h, const char* title){
 
 	InitAudioDevice();
 
+	engine.videoEnabled = true;
+
 	return 0;
 }
 
@@ -974,6 +976,7 @@ void bsod(const char* finalMsg){
 	fprintf(stderr, "Final message: %s\n", finalMsg);
 
 	if (!engine.graphical) exit(1);
+	if (!engine.videoEnabled) exit(1);
 
 	int scale = screen.UIscale;
 
@@ -1032,11 +1035,6 @@ void bsodED(const char* finalMsg){
 	bsod(finalMsg);
 }
 
-/* Same as bsod but doesn't try to render anything. Exit immediately with message */
-void bsodN(const char* finalMsg){
-	fprintf(stderr, "Final message: %s\n", finalMsg);
-	exit(1);
-}
 
 
 

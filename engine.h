@@ -11,6 +11,8 @@ struct Engine {
 	bool shouldClose;
 	bool inputFresh;
 
+	bool videoEnabled;
+
 	enum {OFFLINE, SERVER, CLIENT, CONNECTING} networkStatus;
 };
 

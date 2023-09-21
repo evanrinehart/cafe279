@@ -16,9 +16,9 @@
 #include <physics.h>  // physics
 #include <loader.h>   // loadConfig, loadWorkspace, saveWorkspace
 #include <engine.h>   // (type)
-#include <bsod.h>     // bsod, bsodN
 #include <clocks.h>   // chron, chronf, setStartTime
 #include <network.h>  // pollNetwork
+#include <bsod.h>     // bsod
 
 struct Engine engine;
 
@@ -42,6 +42,7 @@ int main(int argc, char* argv[]){
 	strcpy(engine.serverHostname, "localhost");
 	engine.serverPort = 12345;
 	engine.networkStatus = OFFLINE;
+	engine.videoEnabled = false;
 
 	int width  = 1920 / 2;
 	int height = 1080 / 2;
@@ -58,7 +59,7 @@ int main(int argc, char* argv[]){
 	int status;
 
 	if (engine.graphical) {
-		status = initializeWindow(width, height, "GAME");    if (status < 0) bsodN("NO GRAPHICS");
+		status = initializeWindow(width, height, "GAME");    if (status < 0) bsod("NO GRAPHICS");
 		status = loadAssets();                               if (status < 0) bsod("NO ASSETS");
 	}
 	else {
@@ -66,7 +67,7 @@ int main(int argc, char* argv[]){
 		void sigintHandler(int sig){ engine.shouldClose = true; }
 		struct sigaction sa = { .sa_handler = sigintHandler, .sa_flags = 0 };
 		sigemptyset(&sa.sa_mask);
-		status = sigaction(SIGINT, &sa, NULL);               if (status < 0) bsodN("NO SIGINT");
+		status = sigaction(SIGINT, &sa, NULL);               if (status < 0) bsod("NO SIGINT");
 	}
 
 	status = loadWorkspace(stderr, "workspace.db");          if (status < 0) bsod("NO WORKSPACE.DB");
