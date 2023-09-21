@@ -66,8 +66,8 @@ RAYLIB_URL = https://github.com/raysan5/raylib.git
 vendor/raylib :
 	mkdir -p vendor
 	git clone --depth=1 --branch=$(RAYLIB_VERSION) $(RAYLIB_URL) vendor/raylib
-	sed -i '2358 s/^/\/\//' vendor/raylib/src/rcore.c
-	sed -i '2379 s/^/\/\//' vendor/raylib/src/rcore.c
+	sed -i 's/SwapScreenBuffer();/\/\/SwapScreenBuffer();/' vendor/raylib/src/rcore.c
+	sed -i 's/PollInputEvents();/\/\/PollInputEvents();/' vendor/raylib/src/rcore.c
 
 libraylib.a : vendor/raylib
 	$(MAKE) -C vendor/raylib/src
