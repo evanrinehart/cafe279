@@ -41,23 +41,22 @@ $(EXE_NAME)-nogfx : $(OBJECTS) nullrenderer.o nullsound.o sqlite3.o libenet.a
 	gcc -o $(EXE_NAME)-nogfx $(OBJECTS) nullrenderer.o nullsound.o sqlite3.o libenet.a $(LIBS)
 
 # implicit rules and compile action for .c files used here
-main.o : engine.h renderer.h brain.h physics.h loader.h bsod.h clocks.h
-renderer.o : include/raylib.h brain.h sound.h renderer.h linear.h bsod.h doodad.h chunk.h megaman.h
+main.o :      $(addprefix include/, linear.h renderer.h brain.h loader.h engine.h clocks.h network.h bsod.h misc.h)
+brain.o :     $(addprefix include/, engine.h linear.h sound.h physics.h chunk.h megaman.h network.h messages.h clocks.h misc.h)
+physics.o :   $(addprefix include/, linear.h doodad.h physics.h chunk.h misc.h)
+doodad.o :    $(addprefix include/, linear.h doodad.h)
+chunk.o :     $(addprefix include/, linear.h chunk.h floodfill.h bsod.h)
+linear.o :    include/linear.h
+clocks.o :    include/clocks.h
+floodfill.o : include/floodfill.h
+messages.o :  include/messages.h
+misc.o :      include/misc.h
+renderer.o :  $(addprefix include/, raylib.h linear.h engine.h doodad.h megaman.h chunk.h renderer.h bsod.h physics.h sound.h brain.h)
 nullrenderer.o :
-sound.o : include/raylib.h sound.h
-nullsound.o : sound.h
-physics.o : doodad.h chunk.h linear.h misc.h
-loader.o : loader.h linear.h doodad.h chunk.h include/sqlite3.h
-doodad.o : doodad.h linear.h
-chunk.o : chunk.h floodfill.h
-linear.o : linear.h
-clocks.o : clocks.h
-bresenham.o : bresenham.h
-floodfill.o : floodfill.h
-messages.o : messages.h
-misc.o : misc.h
-network.o : include/enet/enet.h network.h
-brain.o : linear.h bsod.h doodad.h chunk.h megaman.h network.h misc.h
+sound.o :     $(addprefix include/, raylib.h sound.h)
+nullsound.o : $(addprefix include/, sound.h)
+loader.o :    $(addprefix include/, loader.h sqlite3.h linear.h doodad.h megaman.h chunk.h)
+network.o :   $(addprefix include/, enet/enet.h network.h)
 
 # define a custom pattern rule to compile D files in the same way C files are
 #%.o : %.d ; $(DC) -fno-druntime -c $<

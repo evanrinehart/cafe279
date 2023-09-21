@@ -15,9 +15,9 @@
 #include <renderer.h> // renderSwap renderPollInput loadAssets shutdownRenderer
 #include <brain.h>    // think, initializeEverything, shutdownEverything, enableServer
 #include <loader.h>   // loadConfig, loadWorkspace, saveWorkspace
-#include <engine.h>   // (type)
+#include <engine.h>   //
 #include <clocks.h>   // chron, chronf, setStartTime
-#include <network.h>  // pollNetwork
+#include <network.h>  //
 #include <bsod.h>     // bsod
 #include <misc.h>     // readBool
 
