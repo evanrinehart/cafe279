@@ -16,6 +16,7 @@ LIBS = -lm -lrt
 
 OBJECTS = \
 	main.o \
+	brain.o \
 	linear.o \
 	loader.o \
 	clocks.o \
@@ -30,16 +31,18 @@ OBJECTS = \
 
 EXE_NAME = game
 
-$(EXE_NAME) : $(OBJECTS) renderer.o sqlite3.o libraylib.a libenet.a
-	gcc -o $(EXE_NAME) $(OBJECTS) renderer.o sqlite3.o libraylib.a libenet.a $(LIBS) -lGL -lX11
+$(EXE_NAME) : $(OBJECTS) renderer.o sound.o sqlite3.o libraylib.a libenet.a
+	gcc -o $(EXE_NAME) $(OBJECTS) renderer.o sound.o sqlite3.o libraylib.a libenet.a $(LIBS) -lGL -lX11
 
-$(EXE_NAME)-nogfx : $(OBJECTS) rendnull.o sqlite3.o libenet.a
-	gcc -o $(EXE_NAME)-nogfx $(OBJECTS) rendnull.o sqlite3.o libenet.a $(LIBS)
+$(EXE_NAME)-nogfx : $(OBJECTS) rendnull.o nullsound.o sqlite3.o libenet.a
+	gcc -o $(EXE_NAME)-nogfx $(OBJECTS) rendnull.o nullsound.o sqlite3.o libenet.a $(LIBS)
 
 # implicit rules and compile action for .c files used here
-main.o : engine.h renderer.h physics.h loader.h bsod.h clocks.h
+main.o : engine.h renderer.h brain.h physics.h loader.h bsod.h clocks.h
 renderer.o : raylib.h renderer.h linear.h bsod.h doodad.h chunk.h megaman.h network.h misc.h
 rendnull.o : renderer.h linear.h bsod.h chunk.h megaman.h network.h misc.h
+sound.o : raylib.h sound.h
+nullsound.o : sound.h
 physics.o : doodad.h chunk.h linear.h misc.h
 loader.o : loader.h linear.h doodad.h chunk.h sqlite3.h
 doodad.o : doodad.h linear.h
@@ -51,6 +54,7 @@ floodfill.o : floodfill.h
 messages.o : messages.h
 misc.o : misc.h
 network.o : include/enet/enet.h network.h
+brain.o : linear.h bsod.h doodad.h chunk.h megaman.h network.h misc.h
 
 # define a custom pattern rule to compile D files in the same way C files are
 #%.o : %.d ; $(DC) -fno-druntime -c $<
@@ -104,7 +108,7 @@ libenet.a include/enet/enet.h &: vendor/enet
 clean :
 	rm -f $(EXE_NAME) $(EXE_NAME)-nogfx
 	rm -f $(OBJECTS)
-	rm -f renderer.o rendnull.o
+	rm -f renderer.o rendnull.o sound.o nullsound.o
 	rm -f raylib.h rlgl.h libraylib.a
 	rm -f libenet.a
 	rm -rf include/enet/

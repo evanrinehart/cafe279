@@ -12,8 +12,8 @@
 #include <threads.h>
 
 #include <linear.h>
-#include <renderer.h> // ...
-#include <physics.h>  // physics
+#include <renderer.h> // renderSwap renderPollInput loadAssets shutdownRenderer
+#include <brain.h>    // think, initializeEverything, shutdownEverything, enableServer
 #include <loader.h>   // loadConfig, loadWorkspace, saveWorkspace
 #include <engine.h>   // (type)
 #include <clocks.h>   // chron, chronf, setStartTime
@@ -124,7 +124,7 @@ int mainThreadProc(void* u){
 		int missedUpdates = totalUpdates - highestUpdateCompleted;
 
 		for(int i = 0; i < missedUpdates; i++){
-			physics();
+			think();
 			engine.frameNumber++;
 		}
 
@@ -147,8 +147,12 @@ int graphicsThreadProc(void *u){
 		rerenderEverything();
 		mtx_unlock(&masterLock);
 
-		if(windowShouldClose()) { engine.shouldClose = 1; return 0; }
+		if(windowShouldClose()) { engine.shouldClose = 1; break; }
 
 		renderSwap();
 	}
+
+	shutdownRenderer();
+
+	return 0;
 }

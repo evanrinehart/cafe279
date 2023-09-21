@@ -15,26 +15,16 @@
 #include <raylib.h>
 
 #include <linear.h>
-
+#include <engine.h>
 #include <doodad.h>
 #include <megaman.h>
 #include <chunk.h>
-#include <engine.h>
-
 #include <renderer.h>
-
 #include <bsod.h>
 #include <floodfill.h>
-
-#include <clocks.h>
-
 #include <physics.h> // temporary
-
-#include <network.h>
-
-#include <messages.h>
-
-#include <misc.h>
+#include <sound.h>
+#include <brain.h>
 
 vec2 screenToWorld(double screenX, double screenY);
 void getViewBounds(double *l, double *r, double *b, double *t);
@@ -84,22 +74,16 @@ int mouse_buttons[10];
 struct Screen screen;
 struct World world;
 
-struct Megaman megaman;
-
 //static Texture bgtex;
 static Texture mmtex;
 static Texture statstex;
 static Texture tilesetTex;
 
-
 enum Tool {BLOCK_EDIT_TOOL};
-
 
 enum Tool tool = BLOCK_EDIT_TOOL;
 
-
 int blockChoice = 250;
-
 
 vec2 updateMouse(){
 	Vector2 m = GetMousePosition();
@@ -108,10 +92,7 @@ vec2 updateMouse(){
 	return screen.mouse;
 }
 
-
 int initializeWindow(int w, int h, const char* title){
-
-	if(!engine.graphical) return 0;
 
 	fprintf(stderr, "%s(%d) initializeWindow...\n", __FILE__, __LINE__);
 
@@ -144,7 +125,7 @@ int windowShouldClose(){
 }
 
 static int icon_count = 0;
-static Texture icons[256];
+//static Texture icons[256];
 static Font infoFont;
 static Font infoFont2;
 static Font infoFont3;
@@ -155,20 +136,7 @@ static const char* fontpath = "assets/fonts/Roboto_Condensed/RobotoCondensed-Reg
 //static const char* fontpath = "assets/fonts/Roboto_Condensed/RobotoCondensed-Regular.ttf";
 static int F = 13;
 
-Sound callingSound;
-int stillCalling = 0;
-int callingTimer = 240;
-static bool clientEn = false;
-Sound wrongSound;
-Sound successSound;
-Sound closedSound;
-Sound dsradioSound;
-Sound grantedSound;
-Sound messageSound;
-
 int loadAssets(){
-
-	if(!engine.graphical) return 0;
 
 	fprintf(stderr, "%s(%d) loadAssets...\n", __FILE__, __LINE__);
 
@@ -192,13 +160,7 @@ int loadAssets(){
 	tilesetTex = LoadTexture("assets/tileset.png");
 	SetTextureWrap(tilesetTex, TEXTURE_WRAP_CLAMP);
 
-	callingSound = LoadSound("assets/sounds/calling.mp3");
-	wrongSound = LoadSound("assets/sounds/wrong.mp3");
-	successSound = LoadSound("assets/sounds/success.wav");
-	closedSound = LoadSound("assets/sounds/closed.wav");
-	dsradioSound = LoadSound("assets/sounds/dsradio.wav");
-	grantedSound = LoadSound("assets/sounds/granted.wav");
-	messageSound = LoadSound("assets/sounds/message.mp3");
+	loadSounds();
 
 	return 0;
 }
@@ -339,12 +301,6 @@ void drawUISprite(Texture tex, double x, double y, double zoom){
 
 /* Controller */
 
-void initializeEverything(){
-	finishChunkLoading();
-}
-
-// raw action routines... master controller
-
 void mouseMotion(vec2 mouse, vec2 delta){
 	// mouse_diff might be large for reasons, don't assume it's small
 
@@ -403,183 +359,6 @@ void inputCharacter(int c){
 	printf("input character %c\n", c);
 }
 
-void newConnectionCb(int connId, const char * identifier){
-	PlaySound(dsradioSound);
-	printf("New Connection connId=%d identifier=%s\n", connId, identifier);
-}
-
-void newMessageCb(int connId, unsigned char * data, int datasize){
-	printf("New Message from connId=%d: ", connId);
-	printData(data, datasize);
-	PlaySound(messageSound);
-
-	struct Ping ping;
-	int e = parsePing(data, datasize, &ping);
-	if(e < 0){ printf("failed to parse PING\n"); return; }
-
-	printf("Ping %d %lf\n", ping.sequence, ping.time);
-
-	double t = chronf();
-	struct Pong pong = {ping.sequence, ping.time, t};
-	unsigned char buf[256];
-	int size = unparsePong(&pong, buf, 256);
-	if(size < 0){ printf("failed to unparse PONG\n"); return; }
-	e = sendMessageTo(connId, buf, size);
-	if(e < 0){ printf("failed to send PONG\n"); return; }
-}
-
-void disconnectionCb(int connId){
-	PlaySound(dsradioSound);
-	printf("connId=%d disconnected\n", connId);
-}
-
-void newMessageCb2(int connId, unsigned char * data, int datasize){
-	printf("Client got New Message connId=%d: ", connId);
-	printData(data, datasize);
-	PlaySound(messageSound);
-
-
-	struct Pong pong;
-	int e = parsePong(data, datasize, &pong);
-	if(e < 0){ printf("failed to parse PONG\n"); return; }
-
-	double now = chronf();
-	printf("Pong %d %lf %lf now=%lf\n", pong.sequence, pong.time1, pong.time2, now);
-	printf("time1 = %lf\n", pong.time1);
-	printf("time2 = %lf\n", now);
-	printf("time2 - time1 = %lf\n", now - pong.time1);
-}
-
-void newChunkCb(unsigned char * data, int datasize){
-	printf("Client got New Chunk: ");
-	printData(data, datasize);
-}
-
-void connectionSucceededCb(void){
-	StopSound(callingSound);
-	PlaySound(successSound);
-	stillCalling = 0;
-	callingTimer = 240;
-	engine.networkStatus = CLIENT;
-	printf("connection succeeded\n");
-}
-
-void connectionFailedCb(int error){
-	StopSound(callingSound);
-	stillCalling = 0;
-	callingTimer = 240;
-	engine.networkStatus = OFFLINE;
-	PlaySound(wrongSound);
-	printf("connection failed\n");
-}
-
-void connectionClosedCb(void){
-	StopSound(callingSound);
-	stillCalling = 0;
-	clientEn = false;
-	engine.networkStatus = OFFLINE;
-	PlaySound(closedSound);
-	printf("connection closed\n");
-}
-
-
-
-int enableServer(){
-	struct NetworkCallbacks1 serverCallbacks = {
-		newConnectionCb,
-		newMessageCb,
-		disconnectionCb
-	};
-
-	puts("Host Game ...");
-	int status = netEnableServer(engine.serverPort, serverCallbacks);
-	if(status < 0)  return -1;
-
-	engine.networkStatus = SERVER;
-	puts("... Server Online");
-	if(engine.graphical) PlaySound(grantedSound);
-	return 0;
-}
-
-void pressH(){
-
-	switch (engine.networkStatus) {
-	case SERVER:
-		netDisableServer();
-		fprintf(stderr, "Server terminated\n");
-		PlaySound(closedSound);
-		engine.networkStatus = OFFLINE;
-		break;
-	case CONNECTING:
-		fprintf(stderr, "Connection in progress\n");
-		PlaySound(wrongSound);
-		break;
-	case CLIENT:
-		fprintf(stderr, "You're in the middle of a multiplayer game already\n");
-		PlaySound(wrongSound);
-		break;
-	case OFFLINE:
-		enableServer();
-		break;
-	}
-
-}
-
-void pressN(){
-	pollNetwork();
-}
-
-void pressC(){
-
-	switch (engine.networkStatus) {
-	case SERVER:
-		fprintf(stderr, "You're hosting a game. Shutdown the server first\n");
-		PlaySound(wrongSound);
-		break;
-	case CLIENT:
-	case CONNECTING:
-		disconnectFromServer();
-		PlaySound(closedSound);
-		StopSound(callingSound);
-		engine.networkStatus = OFFLINE;
-		callingTimer = 240;
-		stillCalling = 0;
-		clientEn = false;
-		break;
-	case OFFLINE:
-		struct NetworkCallbacks2 clientCallbacks = {
-			.csc = connectionSucceededCb,
-			.cfc = connectionFailedCb,
-			.ccc = connectionClosedCb,
-			.nmc = newMessageCb2,
-			.nchc = newChunkCb,
-		};
-		int status = connectToServer(engine.serverHostname, engine.serverPort, clientCallbacks);
-		if(status < 0) return;
-		clientEn = true;
-		PlaySound(callingSound);
-		stillCalling = 1;
-		engine.networkStatus = CONNECTING;
-		break;
-	}
-}
-
-void pressL(){
-	unsigned char msg[] = "HELLO WORLD\n";
-	int status = sendMessageTo(0, msg, sizeof msg);
-	if(status < 0){
-		printf("sendMessage failed!\n");
-	}
-}
-
-void pressG(){
-	unsigned char msg[] = "HELLO WORLD\n";
-	int status = sendMessage(msg, sizeof msg);
-	if(status < 0){
-		printf("sendMessage failed!\n");
-	}
-}
-
 void pressPause(){
 	engine.paused = !engine.paused;
 }
@@ -611,21 +390,6 @@ void holdUpDownArrow(vec2 mouse, int updown){
 
 
 
-void pressP(){
-	double t = chronf();
-	struct Ping ping = {0, t};
-	unsigned char buf[1024];
-	int size = unparsePing(&ping, buf, 1024);
-	int e = sendMessage(buf, size);
-	if(e<0){ printf("ping failed to send\n"); return; }
-
-	double timeout = t + 0.250;
-	while(chronf() < timeout){
-		pollNetwork();
-	}
-}
-
-
 
 void pressV(){
 	engine.vsyncHint = !engine.vsync;
@@ -648,8 +412,6 @@ void manageVSync(){
 // source event from raylib
 
 void dispatchInput(){
-
-	if(!engine.graphical) return;
 
 	// mouse
 	vec2 mouse_prev = screen.mouse;
@@ -928,16 +690,6 @@ void renderPollInput(){
 
 void rerenderEverything(){
 
-	if(stillCalling){
-		callingTimer--;
-		if(callingTimer == 0){
-			callingTimer = 350;
-			PlaySound(callingSound);
-		}
-	}
-
-	if(!engine.graphical) return;
-
 	BeginDrawing();
 
 	ClearBackground(WHITE);
@@ -986,20 +738,11 @@ void rerenderEverything(){
 	manageVSync();
 }
 
-
-void shutdownEverything(){
-	disconnectFromServer();
-	netDisableServer();
-	if(!engine.graphical) return;
-	CloseWindow();
-}
-
 /* Display BSOD screen until user presses a key to exit */
 void bsod(const char* finalMsg){
 
 	fprintf(stderr, "Final message: %s\n", finalMsg);
 
-	if (!engine.graphical) exit(1);
 	if (!engine.videoEnabled) exit(1);
 
 	int scale = screen.UIscale;
@@ -1049,18 +792,11 @@ void bsod(const char* finalMsg){
 }
 
 
-
-
-
-/* Enter the bsod loop but EndDrawing first. Usable inside renderer */
-void bsodED(const char* finalMsg){
-	if(engine.graphical == true) EndDrawing();
-
-	bsod(finalMsg);
-}
-
-
-
 bool rendererExists() {
 	return true;
+}
+
+void shutdownRenderer() {
+	// TODO unload all the assets here
+	CloseWindow();
 }
