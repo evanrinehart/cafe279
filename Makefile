@@ -34,13 +34,13 @@ EXE_NAME = game
 $(EXE_NAME) : $(OBJECTS) renderer.o sound.o sqlite3.o libraylib.a libenet.a
 	gcc -o $(EXE_NAME) $(OBJECTS) renderer.o sound.o sqlite3.o libraylib.a libenet.a $(LIBS) -lGL -lX11
 
-$(EXE_NAME)-nogfx : $(OBJECTS) rendnull.o nullsound.o sqlite3.o libenet.a
-	gcc -o $(EXE_NAME)-nogfx $(OBJECTS) rendnull.o nullsound.o sqlite3.o libenet.a $(LIBS)
+$(EXE_NAME)-nogfx : $(OBJECTS) nullrenderer.o nullsound.o sqlite3.o libenet.a
+	gcc -o $(EXE_NAME)-nogfx $(OBJECTS) nullrenderer.o nullsound.o sqlite3.o libenet.a $(LIBS)
 
 # implicit rules and compile action for .c files used here
 main.o : engine.h renderer.h brain.h physics.h loader.h bsod.h clocks.h
-renderer.o : raylib.h renderer.h linear.h bsod.h doodad.h chunk.h megaman.h network.h misc.h
-rendnull.o : renderer.h linear.h bsod.h chunk.h megaman.h network.h misc.h
+renderer.o : raylib.h brain.h sound.h renderer.h linear.h bsod.h doodad.h chunk.h megaman.h
+nullrenderer.o :
 sound.o : raylib.h sound.h
 nullsound.o : sound.h
 physics.o : doodad.h chunk.h linear.h misc.h
@@ -108,7 +108,7 @@ libenet.a include/enet/enet.h &: vendor/enet
 clean :
 	rm -f $(EXE_NAME) $(EXE_NAME)-nogfx
 	rm -f $(OBJECTS)
-	rm -f renderer.o rendnull.o sound.o nullsound.o
+	rm -f renderer.o nullrenderer.o sound.o nullsound.o
 	rm -f raylib.h rlgl.h libraylib.a
 	rm -f libenet.a
 	rm -rf include/enet/

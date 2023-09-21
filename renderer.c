@@ -21,7 +21,6 @@
 #include <chunk.h>
 #include <renderer.h>
 #include <bsod.h>
-#include <floodfill.h>
 #include <physics.h> // temporary
 #include <sound.h>
 #include <brain.h>
