@@ -1,5 +1,7 @@
 /* interface to the renderer */
 
+bool rendererExists();
+
 int initializeWindow(int w, int h, const char* title);
 int loadAssets();
 
@@ -14,8 +16,6 @@ void shutdownEverything();
 
 
 int enableServer();
-
-void manageVsync();
 
 void renderPollInput();
 void renderSwap();

@@ -58,7 +58,7 @@ int main(int argc, char* argv[]){
 		strcpy(engine.serverHostname, argv[i]);
 	}
 
-	engine.graphical = engine.dedicated ? false : true;
+	engine.graphical = rendererExists();
 	engine.vsyncHint = engine.vsync;
 
 	int status;
@@ -80,10 +80,11 @@ int main(int argc, char* argv[]){
 	status = mtx_init(&masterLock, mtx_plain);               if (status < 0) bsod("NO MASTER LOCK");
 	status = thrd_create(&mainThread, mainThreadProc, NULL); if (status < 0) bsod("NO THREAD");
 
-	if(engine.graphical) {
+	if (engine.graphical) {
 		graphicsThreadProc(NULL);
 	}
-	else {
+
+	if (engine.dedicated) {
 		status = enableServer();                             if (status < 0) bsod("NO SERVER");
 	}
 
@@ -121,7 +122,7 @@ int mainThreadProc(void* u){
 			engine.frameNumber++;
 		}
 
-		highestUpdateCompleted = updates;
+		highestUpdateCompleted = totalUpdates;
 
 		mtx_unlock(&masterLock);
 
@@ -138,12 +139,10 @@ int graphicsThreadProc(void *u){
 		mtx_lock(&masterLock);
 		renderPollInput();
 		rerenderEverything();
-
-		manageVsync();
-
 		mtx_unlock(&masterLock);
 
 		if(windowShouldClose()) { engine.shouldClose = 1; return 0; }
+
 		renderSwap();
 	}
 }

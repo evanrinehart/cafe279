@@ -631,7 +631,7 @@ void pressV(){
 	engine.vsyncHint = !engine.vsync;
 }
 
-void manageVsync(){
+void manageVSync(){
 	if (engine.vsyncHint != engine.vsync) {
 		if(engine.vsyncHint){
 			SetWindowState(FLAG_VSYNC_HINT);
@@ -982,6 +982,8 @@ void rerenderEverything(){
 	if(overlayMode > 0) renderEdgeOverlay(overlayMode);
 
 	EndDrawing();
+
+	manageVSync();
 }
 
 
@@ -1059,4 +1061,6 @@ void bsodED(const char* finalMsg){
 
 
 
-
+bool rendererExists() {
+	return true;
+}
