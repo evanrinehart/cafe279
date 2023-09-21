@@ -19,6 +19,7 @@
 #include <clocks.h>   // chron, chronf, setStartTime
 #include <network.h>  // pollNetwork
 #include <bsod.h>     // bsod
+#include <misc.h>     // readBool
 
 struct Engine engine;
 
@@ -43,6 +44,8 @@ int main(int argc, char* argv[]){
 	engine.serverPort = 12345;
 	engine.networkStatus = OFFLINE;
 	engine.videoEnabled = false;
+	engine.vsync = true;
+	engine.vsyncHint = true;
 
 	int width  = 1920 / 2;
 	int height = 1080 / 2;
@@ -51,10 +54,12 @@ int main(int argc, char* argv[]){
 		if (strcmp(argv[i], "-d") == 0) { engine.dedicated = true; continue; }
 		if (strcmp(argv[i], "-p") == 0 && i+1 < argc) { engine.serverPort = atoi(argv[i+1]); i++; continue; }
 		if (strcmp(argv[i], "--window") == 0 && i+1 < argc) { sscanf(argv[i+1], "%dx%d", &width, &height); i++; continue; }
+		if (strcmp(argv[i], "--vsync") == 0 && i+1 < argc) { engine.vsync = readBool(argv[i+1]); i++; continue; }
 		strcpy(engine.serverHostname, argv[i]);
 	}
 
 	engine.graphical = engine.dedicated ? false : true;
+	engine.vsyncHint = engine.vsync;
 
 	int status;
 
@@ -128,8 +133,11 @@ int mainThreadProc(void* u){
 int graphicsThreadProc(void *u){
 	for(;;){
 		mtx_lock(&masterLock);
+		renderPollInput();
 		rerenderEverything();
-		renderPollInput(); engine.inputFresh = true;
+
+		manageVsync();
+
 		mtx_unlock(&masterLock);
 
 		if(windowShouldClose()) { engine.shouldClose = 1; return 0; }

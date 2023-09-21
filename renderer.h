@@ -15,7 +15,7 @@ void shutdownEverything();
 
 int enableServer();
 
-
+void manageVsync();
 
 void renderPollInput();
 void renderSwap();

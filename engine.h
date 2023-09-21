@@ -12,6 +12,8 @@ struct Engine {
 	bool inputFresh;
 
 	bool videoEnabled;
+	bool vsync;
+	bool vsyncHint;
 
 	enum {OFFLINE, SERVER, CLIENT, CONNECTING} networkStatus;
 };

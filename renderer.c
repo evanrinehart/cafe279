@@ -120,7 +120,7 @@ int initializeWindow(int w, int h, const char* title){
 	screen.UIscale = w / (1920 / 2);
 
 	SetConfigFlags(FLAG_MSAA_4X_HINT);
-	SetConfigFlags(FLAG_VSYNC_HINT);
+	if (engine.vsync) SetConfigFlags(FLAG_VSYNC_HINT);
 	//SetTargetFPS(60);
 
 	InitWindow(w, h, title);
@@ -626,6 +626,25 @@ void pressP(){
 }
 
 
+
+void pressV(){
+	engine.vsyncHint = !engine.vsync;
+}
+
+void manageVsync(){
+	if (engine.vsyncHint != engine.vsync) {
+		if(engine.vsyncHint){
+			SetWindowState(FLAG_VSYNC_HINT);
+			engine.vsync = true;
+		}
+		else{
+			ClearWindowState(FLAG_VSYNC_HINT);
+			engine.vsync = false;
+		}
+	}
+}
+
+
 // source event from raylib
 
 void dispatchInput(){
@@ -663,6 +682,7 @@ void dispatchInput(){
 	if(IsKeyPressed(KEY_N)){ pressN(); }
 	if(IsKeyPressed(KEY_L)){ pressL(); }
 	if(IsKeyPressed(KEY_P)){ pressP(); }
+	if(IsKeyPressed(KEY_V)){ pressV(); }
 
 	if(IsKeyDown(KEY_UP))  { holdUpDownArrow(mouse,  1); }
 	if(IsKeyDown(KEY_DOWN)){ holdUpDownArrow(mouse, -1); }
@@ -901,7 +921,9 @@ void renderSwap(){
 }
 
 void renderPollInput(){
+	if (engine.inputFresh) return;
 	PollInputEvents();
+	engine.inputFresh = true;
 }
 
 void rerenderEverything(){
