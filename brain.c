@@ -96,7 +96,7 @@ void connectionFailedCb(int error){
 	stillCalling = 0;
 	callingTimer = 240;
 	engine.networkStatus = OFFLINE;
-	printf("connection failed\n");
+	printf("connection failed (%d)\n", error);
 	playSound(SND_WRONG);
 	stopSound(SND_CALLING);
 }
@@ -130,7 +130,18 @@ int enableServer(){
 
 void pressH(){
 
+
 	switch (engine.networkStatus) {
+	case OFFLINE:
+	{
+		int status = enableServer();
+		if (status < 0) {
+			playSound(SND_WRONG);
+		} else {
+			playSound(SND_GRANTED);
+		}
+		break;
+	}
 	case SERVER:
 		netDisableServer();
 		fprintf(stderr, "Server terminated\n");
@@ -145,14 +156,6 @@ void pressH(){
 		fprintf(stderr, "You're in the middle of a multiplayer game already\n");
 		playSound(SND_WRONG);
 		break;
-	case OFFLINE:
-		int status = enableServer();
-		if (status < 0) {
-			playSound(SND_WRONG);
-		} else {
-			playSound(SND_GRANTED);
-		}
-		break;
 	}
 
 }
@@ -164,6 +167,25 @@ void pressN(){
 void pressC(){
 
 	switch (engine.networkStatus) {
+	case OFFLINE:
+	{
+		struct NetworkCallbacks2 clientCallbacks = {
+			.csc = connectionSucceededCb,
+			.cfc = connectionFailedCb,
+			.ccc = connectionClosedCb,
+			.nmc = newMessageCb2,
+			.nchc = newChunkCb,
+		};
+
+		int status = connectToServer(engine.serverHostname, engine.serverPort, clientCallbacks);
+		if(status < 0) return;
+
+		clientEn = true;
+		playSound(SND_CALLING);
+		stillCalling = 1;
+		engine.networkStatus = CONNECTING;
+		break;
+	}
 	case SERVER:
 		fprintf(stderr, "You're hosting a game. Shutdown the server first\n");
 		playSound(SND_WRONG);
@@ -177,21 +199,6 @@ void pressC(){
 		callingTimer = 240;
 		stillCalling = 0;
 		clientEn = false;
-		break;
-	case OFFLINE:
-		struct NetworkCallbacks2 clientCallbacks = {
-			.csc = connectionSucceededCb,
-			.cfc = connectionFailedCb,
-			.ccc = connectionClosedCb,
-			.nmc = newMessageCb2,
-			.nchc = newChunkCb,
-		};
-		int status = connectToServer(engine.serverHostname, engine.serverPort, clientCallbacks);
-		if(status < 0) return;
-		clientEn = true;
-		playSound(SND_CALLING);
-		stillCalling = 1;
-		engine.networkStatus = CONNECTING;
 		break;
 	}
 }

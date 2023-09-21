@@ -7,12 +7,15 @@ CFLAGS = \
 	-I. \
 	-Iinclude \
 	-Wall \
+	-Wextra \
 	-Werror \
+	-pedantic \
 	-Wno-error=unused-variable \
+	-Wno-error=unused-parameter \
 	-Wno-error=unused-function \
 	-Wno-error=unused-but-set-variable
 
-LIBS = -lm -lrt
+LIBS = -lm -lrt -lpthread -ldl
 
 OBJECTS = \
 	main.o \

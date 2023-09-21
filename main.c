@@ -84,10 +84,6 @@ int main(int argc, char* argv[]){
 		graphicsThreadProc(NULL);
 	}
 
-	if (engine.dedicated) {
-		status = enableServer();                             if (status < 0) bsod("NO SERVER");
-	}
-
 	thrd_join(mainThread, 0);
 	mtx_destroy(&masterLock);
 	status = saveWorkspace(stderr, "workspace.db");          if (status < 0) bsod("saveWorkspace failed");
@@ -99,6 +95,13 @@ int main(int argc, char* argv[]){
 
 
 int mainThreadProc(void* u){
+
+	if (engine.dedicated) {
+		int status = enableServer();
+		if (status < 0) {
+				fprintf(stderr, ">_< dedicated server failed to start\n");
+		}
+	}
 
 	int highestUpdateCompleted = -1;
 	double updateZeroTime = chronf();

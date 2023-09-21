@@ -28,7 +28,7 @@ int loadSounds(){
 	soundTable[SND_CLOSED]  = &closedSound;
 	soundTable[SND_DSRADIO] = &dsradioSound;
 	soundTable[SND_GRANTED] = &grantedSound;
-	soundTable[SND_MURMUR]  = &callingSound;
+	soundTable[SND_MURMUR]  = &messageSound;
 
 	return 0;
 }
