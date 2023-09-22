@@ -20,6 +20,8 @@
 #include <clocks.h>
 #include <misc.h>
 
+#include <sync.h>
+
 struct Megaman megaman;
 
 static int stillCalling = 0;
@@ -72,10 +74,19 @@ void newMessageCb2(int connId, unsigned char * data, int datasize){
 	if(e < 0){ printf("failed to parse PONG\n"); return; }
 
 	double now = chronf();
-	printf("Pong %d %lf %lf now=%lf\n", pong.sequence, pong.time1, pong.time2, now);
+	printf("Pong %d %lf %lf now=%lf\n", pong.sequence, pong.time1, pong.serverTime, now);
 	printf("time1 = %lf\n", pong.time1);
 	printf("time2 = %lf\n", now);
 	printf("time2 - time1 = %lf\n", now - pong.time1);
+
+	syncPong(pong.sequence, pong.time1, pong.serverTime, now);
+	printSamples();
+
+	if(syncStatus == SYNC_READY){
+		double offset = syncEnd();
+		engine.timeOffset = offset;
+		printf("sync done\n");
+	}
 }
 
 void newChunkCb(unsigned char * data, int datasize){
@@ -91,6 +102,8 @@ void connectionSucceededCb(void){
 	printf("connection succeeded\n");
 	playSound(SND_SUCCESS);
 	stopSound(SND_CALLING);
+
+	syncBegin();
 }
 
 void connectionFailedCb(int error){
@@ -246,6 +259,8 @@ void think(){
 			playSound(SND_CALLING);
 		}
 	}
+
+	syncPoll();
 
 	physics();
 

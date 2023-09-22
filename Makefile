@@ -28,6 +28,7 @@ OBJECTS = \
 	network.o \
 	misc.o \
 	messages.o \
+	sync.o \
 	doodad.o
 
 EXE_NAME = game
@@ -55,6 +56,7 @@ loader.o :    $(addprefix include/, loader.h sqlite3.h linear.h doodad.h megaman
 network.o :   $(addprefix include/, enet/enet.h network.h)
 nullsound.o : $(addprefix include/, sound.h)
 nullrenderer.o :
+sync.o :      $(addprefix include/, sync.h clocks.h messages.h network.h)
 
 # define a custom pattern rule to compile D files in the same way C files are
 #%.o : %.d ; $(DC) -fno-druntime -c $<

@@ -6,7 +6,7 @@ struct Ping {
 struct Pong {
 	int sequence;
 	double time1;
-	double time2;
+	double serverTime;
 };
 
 int parsePing(unsigned char * buf, int bufsize, struct Ping *ping);

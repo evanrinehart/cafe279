@@ -10,7 +10,7 @@ struct Ping {
 struct Pong {
 	unsigned sequence;
 	double time1;
-	double time2;
+	double serverTime;
 };
 
 struct Slice {
@@ -170,31 +170,31 @@ int unparsePong(struct Pong *pong, unsigned char *buf, int bufsize){
 	unsigned char *pen = buf;
 	const int size = 4 + 1 + 4 + 1 + 8 + 1 + 8 + 1;
 	if(bufsize < size) return -1;
-	memcpy(pen, "PONG", 4);          pen += 4;
-	*pen = '\n';                     pen += 1;
-	writeU32BE(pen, pong->sequence); pen += 4;
-	*pen = '\n';                     pen += 1;
-	writeF64BE(pen, pong->time1);    pen += 8;
-	*pen = '\n';                     pen += 1;
-	writeF64BE(pen, pong->time2);    pen += 8;
-	*pen = '\n';                     pen += 1;
+	memcpy(pen, "PONG", 4);             pen += 4;
+	*pen = '\n';                        pen += 1;
+	writeU32BE(pen, pong->sequence);    pen += 4;
+	*pen = '\n';                        pen += 1;
+	writeF64BE(pen, pong->time1);       pen += 8;
+	*pen = '\n';                        pen += 1;
+	writeF64BE(pen, pong->serverTime);  pen += 8;
+	*pen = '\n';                        pen += 1;
 	return size;
 }
 
 int parsePong(unsigned char * buf, int bufsize, struct Pong *pong){
 	struct Slice slice = {buf, bufsize};
 	int err;
-	err = readChars(&slice, "PONG\n");        if (err) { return -1; }
-	err = readU32BE(&slice, &pong->sequence); if (err) { return -1; }
-	err = readChars(&slice, "\n");            if (err) { return -1; }
-	err = readF64BE(&slice, &pong->time1);    if (err) { return -1; }
-	err = readChars(&slice, "\n");            if (err) { return -1; }
-	err = readF64BE(&slice, &pong->time2);    if (err) { return -1; }
-	err = readChars(&slice, "\n");            if (err) { return -1; }
+	err = readChars(&slice, "PONG\n");          if (err) { return -1; }
+	err = readU32BE(&slice, &pong->sequence);   if (err) { return -1; }
+	err = readChars(&slice, "\n");              if (err) { return -1; }
+	err = readF64BE(&slice, &pong->time1);      if (err) { return -1; }
+	err = readChars(&slice, "\n");              if (err) { return -1; }
+	err = readF64BE(&slice, &pong->serverTime); if (err) { return -1; }
+	err = readChars(&slice, "\n");              if (err) { return -1; }
 
 	if(pong->sequence > 1000) { return -1; }
 	if(pong->time1 < 0) { return -1; }
-	if(pong->time2 < 0) { return -1; }
+	if(pong->serverTime < 0) { return -1; }
 
 	return 0;
 }
@@ -246,6 +246,6 @@ static void test(void){
 	bzero(&pong, sizeof pong);
 	e = parsePong(buf, 1024, &pong);
 	if(e < 0){ printf("parse failed\n"); return; }
-	printf("Pong %u %lf %lf\n", pong.sequence, pong.time1, pong.time2);
+	printf("Pong %u %lf %lf\n", pong.sequence, pong.time1, pong.serverTime);
 }
 
