@@ -4,7 +4,6 @@ DC = gdc
 CFLAGS = \
 	-g \
 	-O2 \
-	-I. \
 	-Iinclude \
 	-Wall \
 	-Wextra \
