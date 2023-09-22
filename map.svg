@@ -1,0 +1,64 @@
+<svg version="1.1" viewBox="0 0 1365.3 997.33" xmlns="http://www.w3.org/2000/svg">
+ <defs>
+  <marker id="Arrow2Mstart" overflow="visible" orient="auto">
+   <path transform="scale(.6) translate(0)" d="m8.7186 4.0337-10.926-4.0177 10.926-4.0177c-1.7455 2.3721-1.7354 5.6175-6e-7 8.0354z" fill="context-stroke" fill-rule="evenodd" stroke="context-stroke" stroke-linejoin="round" stroke-width=".625"/>
+  </marker>
+  <marker id="Arrow2Mend" overflow="visible" orient="auto">
+   <path transform="scale(.6) rotate(180) translate(0)" d="m8.7186 4.0337-10.926-4.0177 10.926-4.0177c-1.7455 2.3721-1.7354 5.6175-6e-7 8.0354z" fill="context-stroke" fill-rule="evenodd" stroke="context-stroke" stroke-linejoin="round" stroke-width=".625"/>
+  </marker>
+  <marker id="Arrow2Mend-3" overflow="visible" orient="auto">
+   <path transform="scale(-.6)" d="m8.7186 4.0337-10.926-4.0177 10.926-4.0177c-1.7455 2.3721-1.7354 5.6175-6e-7 8.0354z" fill="context-stroke" fill-rule="evenodd" stroke="context-stroke" stroke-linejoin="round" stroke-width=".625"/>
+  </marker>
+  <marker id="Arrow2Mend-3-0" overflow="visible" orient="auto">
+   <path transform="scale(-.6)" d="m8.7186 4.0337-10.926-4.0177 10.926-4.0177c-1.7455 2.3721-1.7354 5.6175-6e-7 8.0354z" fill="context-stroke" fill-rule="evenodd" stroke="context-stroke" stroke-linejoin="round" stroke-width=".625"/>
+  </marker>
+  <marker id="Arrow2Mend-3-10" overflow="visible" orient="auto">
+   <path transform="scale(-.6)" d="m8.7186 4.0337-10.926-4.0177 10.926-4.0177c-1.7455 2.3721-1.7354 5.6175-6e-7 8.0354z" fill="context-stroke" fill-rule="evenodd" stroke="context-stroke" stroke-linejoin="round" stroke-width=".625"/>
+  </marker>
+  <marker id="Arrow2Mend-3-2" overflow="visible" orient="auto">
+   <path transform="scale(-.6)" d="m8.7186 4.0337-10.926-4.0177 10.926-4.0177c-1.7455 2.3721-1.7354 5.6175-6e-7 8.0354z" fill="context-stroke" fill-rule="evenodd" stroke="context-stroke" stroke-linejoin="round" stroke-width=".625"/>
+  </marker>
+  <marker id="Arrow2Mend-3-5" overflow="visible" orient="auto">
+   <path transform="scale(-.6)" d="m8.7186 4.0337-10.926-4.0177 10.926-4.0177c-1.7455 2.3721-1.7354 5.6175-6e-7 8.0354z" fill="context-stroke" fill-rule="evenodd" stroke="context-stroke" stroke-linejoin="round" stroke-width=".625"/>
+  </marker>
+  <marker id="Arrow2Mend-3-2-6" overflow="visible" orient="auto">
+   <path transform="scale(-.6)" d="m8.7186 4.0337-10.926-4.0177 10.926-4.0177c-1.7455 2.3721-1.7354 5.6175-6e-7 8.0354z" fill="context-stroke" fill-rule="evenodd" stroke="context-stroke" stroke-linejoin="round" stroke-width=".625"/>
+  </marker>
+  <marker id="Arrow2Mend-3-5-9" overflow="visible" orient="auto">
+   <path transform="scale(-.6)" d="m8.7186 4.0337-10.926-4.0177 10.926-4.0177c-1.7455 2.3721-1.7354 5.6175-6e-7 8.0354z" fill="context-stroke" fill-rule="evenodd" stroke="context-stroke" stroke-linejoin="round" stroke-width=".625"/>
+  </marker>
+  <marker id="Arrow2Mend-3-5-9-4" overflow="visible" orient="auto">
+   <path transform="scale(-.6)" d="m8.7186 4.0337-10.926-4.0177 10.926-4.0177c-1.7455 2.3721-1.7354 5.6175-6e-7 8.0354z" fill="context-stroke" fill-rule="evenodd" stroke="context-stroke" stroke-linejoin="round" stroke-width=".625"/>
+  </marker>
+  <marker id="Arrow2Mend-3-5-9-5" overflow="visible" orient="auto">
+   <path transform="scale(-.6)" d="m8.7186 4.0337-10.926-4.0177 10.926-4.0177c-1.7455 2.3721-1.7354 5.6175-6e-7 8.0354z" fill="context-stroke" fill-rule="evenodd" stroke="context-stroke" stroke-linejoin="round" stroke-width=".625"/>
+  </marker>
+  <marker id="Arrow2Mend-3-4" overflow="visible" orient="auto">
+   <path transform="scale(-.6)" d="m8.7186 4.0337-10.926-4.0177 10.926-4.0177c-1.7455 2.3721-1.7354 5.6175-6e-7 8.0354z" fill="context-stroke" fill-rule="evenodd" stroke="context-stroke" stroke-linejoin="round" stroke-width=".625"/>
+  </marker>
+ </defs>
+ <rect x="-891.43" y="-682.48" width="3275.7" height="2418.2" fill="#fff" stroke-width="6.2914"/>
+ <g fill="none" stroke="#000" stroke-width="3.6472">
+  <path d="m160.17 181.04s-0.30597 609.08 0 645.18 3.4098 46.44 18.967 60.961c12.391 11.566 32.712 11.866 49.478 11.732 22.997-0.18376 118.37 0 118.37 0" marker-end="url(#Arrow2Mend)"/>
+  <path d="m206.88 181.04s2.477 125.02 2.6475 150.29 4.2287 33.646 16.927 45.466c12.699 11.819 26.283 17.303 48.342 16.912 22.059-0.39154 72.189-0.50109 72.189-0.50109" marker-end="url(#Arrow2Mend-3)"/>
+  <path d="m1138.8 181.04s-1.1984 262.35-0.9248 285.3c0.1368 11.474-4.5952 42.196-50.248 42.281-45.653 0.0841-92.286 2.4735-124.76 2.7692-30.487 0.27759-43.776 0.70171-56.623 12.55-12.848 11.848-11.215 22.813-10.692 52.37" marker-end="url(#Arrow2Mend-3-4)"/>
+  <path d="m779.18 579.69s-2.477-80.674-2.6475-105.95-4.2287-33.646-16.927-45.466c-12.699-11.819-26.283-17.303-48.342-16.912-22.059 0.39154-107.73 0.50109-107.73 0.50109" marker-end="url(#Arrow2Mend-3-0)"/>
+  <path d="m577.92 878.22s166.48-1.2778 191.76-1.4483 33.646-4.2287 45.466-16.927c11.819-12.699 17.303-26.283 16.912-48.342-0.39154-22.059-0.50109-112.21-0.50109-112.21" marker-end="url(#Arrow2Mend-3-10)"/>
+  <path d="m577.58 906.55c100.76-1.6893 518.67-4.4958 536.11-5.1563 17.439-0.66044 40.173 1.1451 58.712-16.472s24.796-35.111 24.763-50.174c-0.034-15.063-0.5929-135.46-0.5929-135.46" marker-end="url(#Arrow2Mend-3-2)"/>
+  <path d="m603.53 394.21c100.76-1.6893 374.22-4.4958 391.66-5.1563 17.439-0.6604 40.173 1.1451 58.712-16.472 18.539-17.617 24.796-35.111 24.763-50.174-0.034-15.063-0.5929-141.37-0.5929-141.37" marker-end="url(#Arrow2Mend-3-2-6)"/>
+  <path d="m603.53 373.81s118.5-2.477 143.78-2.6475c25.274-0.1706 33.646-4.2287 45.465-16.927 11.819-12.699 17.304-26.283 16.912-48.342-0.3916-22.059-0.5011-124.85-0.5011-124.85" marker-end="url(#Arrow2Mend-3-5)"/>
+  <path d="m456.06 833.7c-0.3916-22.059-0.50109-368.39-0.50109-368.39" marker-end="url(#Arrow2Mend-3-5-9)"/>
+  <path d="m1195.3 549.43c-0.3916-22.059-0.5011-368.39-0.5011-368.39" marker-end="url(#Arrow2Mend-3-5-9-5)"/>
+  <path d="m455.95 333.95c-0.3916-22.059-0.50109-152.9-0.50109-152.9" marker-end="url(#Arrow2Mend-3-5-9-4)" marker-start="url(#Arrow2Mstart)"/>
+ </g>
+ <g font-family="'Roboto Mono'" font-size="64px" font-style="italic" text-anchor="middle">
+  <text x="458.31644" y="913.38409" text-align="center" style="font-variant-caps:normal;font-variant-east-asian:normal;font-variant-ligatures:normal;font-variant-numeric:normal;line-height:1.25" xml:space="preserve"><tspan x="458.31644" y="913.38409" font-family="'Roboto Mono'" font-size="64px" font-style="italic" style="font-variant-caps:normal;font-variant-east-asian:normal;font-variant-ligatures:normal;font-variant-numeric:normal">main</tspan></text>
+  <text x="833.7218" y="658.35608" text-align="center" style="font-variant-caps:normal;font-variant-east-asian:normal;font-variant-ligatures:normal;font-variant-numeric:normal;line-height:1.25" xml:space="preserve"><tspan x="833.7218" y="658.35608" font-family="'Roboto Mono'" font-size="64px" font-style="italic" style="font-variant-caps:normal;font-variant-east-asian:normal;font-variant-ligatures:normal;font-variant-numeric:normal">renderer</tspan></text>
+  <text x="1181.9368" y="658.35608" text-align="center" style="font-variant-caps:normal;font-variant-east-asian:normal;font-variant-ligatures:normal;font-variant-numeric:normal;line-height:1.25" xml:space="preserve"><tspan x="1181.9368" y="658.35608" font-family="'Roboto Mono'" font-size="64px" font-style="italic" style="font-variant-caps:normal;font-variant-east-asian:normal;font-variant-ligatures:normal;font-variant-numeric:normal">loader</tspan></text>
+  <text x="1157.1575" y="138.03134" text-align="center" style="font-variant-caps:normal;font-variant-east-asian:normal;font-variant-ligatures:normal;font-variant-numeric:normal;line-height:1.25" xml:space="preserve"><tspan x="1157.1575" y="138.03134" font-family="'Roboto Mono'" font-size="64px" font-style="italic" style="font-variant-caps:normal;font-variant-east-asian:normal;font-variant-ligatures:normal;font-variant-numeric:normal">models</tspan></text>
+  <text x="816.23273" y="137.2168" text-align="center" style="font-variant-caps:normal;font-variant-east-asian:normal;font-variant-ligatures:normal;font-variant-numeric:normal;line-height:1.25" xml:space="preserve"><tspan x="816.23273" y="137.2168">sound</tspan></text>
+  <text x="493.96057" y="137.2168" text-align="center" style="font-variant-caps:normal;font-variant-east-asian:normal;font-variant-ligatures:normal;font-variant-numeric:normal;line-height:1.25" xml:space="preserve"><tspan x="493.96057" y="137.2168">network</tspan></text>
+  <text x="187.88106" y="138.03134" text-align="center" style="font-variant-caps:normal;font-variant-east-asian:normal;font-variant-ligatures:normal;font-variant-numeric:normal;line-height:1.25" xml:space="preserve"><tspan x="187.88106" y="138.03134">clocks</tspan></text>
+  <text x="474.1463" y="416.56418" text-align="center" style="font-variant-caps:normal;font-variant-east-asian:normal;font-variant-ligatures:normal;font-variant-numeric:normal;line-height:1.25" xml:space="preserve"><tspan x="474.1463" y="416.56418" font-family="'Roboto Mono'" font-size="64px" font-style="italic" style="font-variant-caps:normal;font-variant-east-asian:normal;font-variant-ligatures:normal;font-variant-numeric:normal">brain</tspan></text>
+ </g>
+</svg>
