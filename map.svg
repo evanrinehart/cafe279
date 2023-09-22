@@ -51,14 +51,14 @@
   <path d="m1195.3 549.43c-0.3916-22.059-0.5011-368.39-0.5011-368.39" marker-end="url(#Arrow2Mend-3-5-9-5)"/>
   <path d="m455.95 333.95c-0.3916-22.059-0.50109-152.9-0.50109-152.9" marker-end="url(#Arrow2Mend-3-5-9-4)" marker-start="url(#Arrow2Mstart)"/>
  </g>
- <g font-family="'Roboto Mono'" font-size="64px" font-style="italic" text-anchor="middle">
-  <text x="458.31644" y="913.38409" text-align="center" style="font-variant-caps:normal;font-variant-east-asian:normal;font-variant-ligatures:normal;font-variant-numeric:normal;line-height:1.25" xml:space="preserve"><tspan x="458.31644" y="913.38409" font-family="'Roboto Mono'" font-size="64px" font-style="italic" style="font-variant-caps:normal;font-variant-east-asian:normal;font-variant-ligatures:normal;font-variant-numeric:normal">main</tspan></text>
-  <text x="833.7218" y="658.35608" text-align="center" style="font-variant-caps:normal;font-variant-east-asian:normal;font-variant-ligatures:normal;font-variant-numeric:normal;line-height:1.25" xml:space="preserve"><tspan x="833.7218" y="658.35608" font-family="'Roboto Mono'" font-size="64px" font-style="italic" style="font-variant-caps:normal;font-variant-east-asian:normal;font-variant-ligatures:normal;font-variant-numeric:normal">renderer</tspan></text>
-  <text x="1181.9368" y="658.35608" text-align="center" style="font-variant-caps:normal;font-variant-east-asian:normal;font-variant-ligatures:normal;font-variant-numeric:normal;line-height:1.25" xml:space="preserve"><tspan x="1181.9368" y="658.35608" font-family="'Roboto Mono'" font-size="64px" font-style="italic" style="font-variant-caps:normal;font-variant-east-asian:normal;font-variant-ligatures:normal;font-variant-numeric:normal">loader</tspan></text>
-  <text x="1157.1575" y="138.03134" text-align="center" style="font-variant-caps:normal;font-variant-east-asian:normal;font-variant-ligatures:normal;font-variant-numeric:normal;line-height:1.25" xml:space="preserve"><tspan x="1157.1575" y="138.03134" font-family="'Roboto Mono'" font-size="64px" font-style="italic" style="font-variant-caps:normal;font-variant-east-asian:normal;font-variant-ligatures:normal;font-variant-numeric:normal">models</tspan></text>
-  <text x="816.23273" y="137.2168" text-align="center" style="font-variant-caps:normal;font-variant-east-asian:normal;font-variant-ligatures:normal;font-variant-numeric:normal;line-height:1.25" xml:space="preserve"><tspan x="816.23273" y="137.2168">sound</tspan></text>
-  <text x="493.96057" y="137.2168" text-align="center" style="font-variant-caps:normal;font-variant-east-asian:normal;font-variant-ligatures:normal;font-variant-numeric:normal;line-height:1.25" xml:space="preserve"><tspan x="493.96057" y="137.2168">network</tspan></text>
-  <text x="187.88106" y="138.03134" text-align="center" style="font-variant-caps:normal;font-variant-east-asian:normal;font-variant-ligatures:normal;font-variant-numeric:normal;line-height:1.25" xml:space="preserve"><tspan x="187.88106" y="138.03134">clocks</tspan></text>
-  <text x="474.1463" y="416.56418" text-align="center" style="font-variant-caps:normal;font-variant-east-asian:normal;font-variant-ligatures:normal;font-variant-numeric:normal;line-height:1.25" xml:space="preserve"><tspan x="474.1463" y="416.56418" font-family="'Roboto Mono'" font-size="64px" font-style="italic" style="font-variant-caps:normal;font-variant-east-asian:normal;font-variant-ligatures:normal;font-variant-numeric:normal">brain</tspan></text>
+ <g font-family="Monospace" font-size="64px" font-style="italic" text-anchor="middle">
+  <text x="458.31644" y="913.38409" text-align="center" xml:space="preserve"><tspan x="458.31644" y="913.38409">main</tspan></text>
+  <text x="833.7218"  y="658.35608" text-align="center" xml:space="preserve"><tspan x="833.7218"  y="658.35608">renderer</tspan></text>
+  <text x="1181.9368" y="658.35608" text-align="center" xml:space="preserve"><tspan x="1181.9368" y="658.35608">loader</tspan></text>
+  <text x="1157.1575" y="138.03134" text-align="center" xml:space="preserve"><tspan x="1157.1575" y="138.03134">models</tspan></text>
+  <text x="816.23273" y="137.2168"  text-align="center" xml:space="preserve"><tspan x="816.23273" y="137.2168">sound</tspan></text>
+  <text x="493.96057" y="137.2168"  text-align="center" xml:space="preserve"><tspan x="493.96057" y="137.2168">network</tspan></text>
+  <text x="187.88106" y="138.03134" text-align="center" xml:space="preserve"><tspan x="187.88106" y="138.03134">clocks</tspan></text>
+  <text x="474.1463"  y="416.56418" text-align="center" xml:space="preserve"><tspan x="474.1463"  y="416.56418">brain</tspan></text>
  </g>
 </svg>
