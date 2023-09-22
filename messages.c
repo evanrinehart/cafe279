@@ -18,6 +18,34 @@ struct Slice {
 	int len;
 };
 
+
+int readU8(struct Slice *slice, unsigned *u){
+	if(slice->len < 1) return -1;
+	*u = slice->ptr[0];
+	slice->ptr += 1;
+	slice->len -= 1;
+	return 0;
+}
+
+void writeU8(unsigned char *buf, unsigned u){
+	buf[0] = u;
+}
+
+int readU16BE(struct Slice *slice, unsigned *u){
+	if(slice->len < 2) return -1;
+	*u = 0;
+	*u |= slice->ptr[1] << 0;
+	*u |= slice->ptr[0] << 8;
+	slice->ptr += 2;
+	slice->len -= 2;
+	return 0;
+}
+
+void writeU16BE(unsigned char *buf, unsigned u){
+	buf[0] = (u >> 8) & 255;
+	buf[1] = (u >> 0) & 255;
+}
+
 int readU32BE(struct Slice *slice, unsigned *u){
 	if(slice->len < 4) return -1;
 	*u = 0;
