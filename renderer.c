@@ -129,10 +129,7 @@ static Font infoFont;
 static Font infoFont2;
 static Font infoFont3;
 
-//static const char* fontpath = "assets/fonts/Noto_Sans_SC/NotoSansSC-Regular.ttf";
-//static const char* fontpath = "assets/fonts/Fira_Sans_Condensed/FiraSansCondensed-Regular.ttf";
-static const char* fontpath = "assets/fonts/Roboto_Condensed/RobotoCondensed-Regular.ttf";
-//static const char* fontpath = "assets/fonts/Roboto_Condensed/RobotoCondensed-Regular.ttf";
+//static const char* fontpath = "assets/fonts/RobotoCondensed-Regular.ttf";
 static int F = 13;
 
 int loadAssets(){
@@ -145,9 +142,9 @@ int loadAssets(){
 		icon_count++;
 	}
 
-	infoFont  = LoadFontEx(fontpath, F, NULL, 250);
-	infoFont2 = LoadFontEx(fontpath, 2*F, NULL, 250);
-	infoFont3 = LoadFontEx(fontpath, 3*F, NULL, 250);
+	//infoFont  = LoadFontEx(fontpath, F, NULL, 250);
+	//infoFont2 = LoadFontEx(fontpath, 2*F, NULL, 250);
+	//infoFont3 = LoadFontEx(fontpath, 3*F, NULL, 250);
 
 	mmtex = LoadTexture("assets/megaman.png");
 	SetTextureWrap(mmtex, TEXTURE_WRAP_CLAMP);
@@ -705,7 +702,8 @@ void rerenderEverything(){
 	drawMegaman(vec2(megaman.x, 8), megaman.facing < 0);
 
 	/* * mock status UI * */
-	//drawUISprite(statstex, db_config.stats_pos_x, screen_h - db_config.stats_pos_y, 2.0);
+	Vector2 stats_pos = {30,110};
+	drawUISprite(statstex, stats_pos.x, screen.h - stats_pos.y, 2.0);
 
 	/* doodads */
 	for(struct Doodad *doodad = doodads; doodad < doodads_ptr; doodad++){ drawDoodad(doodad); }
