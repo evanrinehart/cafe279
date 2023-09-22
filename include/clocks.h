@@ -25,3 +25,5 @@ double chronf();
 // Value of chron() reduced to single int.
 // Overflows around time +292 years
 long long chronl();
+
+void millisleep(int n);

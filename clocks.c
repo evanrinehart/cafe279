@@ -66,6 +66,10 @@ void setStartTime(struct Nano t_zero){
 	start_time = t_zero;
 }
 
+void millisleep(int n){
+	usleep(n * 1000);
+}
+
 /*
 static void test(){
 

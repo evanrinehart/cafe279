@@ -41,7 +41,7 @@ $(EXE_NAME)-nogfx : $(OBJECTS) nullrenderer.o nullsound.o sqlite3.o libenet.a
 
 # implicit rules and compile action for .c files used here
 main.o :      $(addprefix include/, linear.h renderer.h brain.h loader.h engine.h clocks.h network.h bsod.h misc.h)
-brain.o :     $(addprefix include/, engine.h linear.h sound.h physics.h chunk.h megaman.h network.h messages.h clocks.h misc.h)
+brain.o :     $(addprefix include/, engine.h linear.h sound.h physics.h chunk.h megaman.h doodad.h network.h messages.h clocks.h misc.h)
 physics.o :   $(addprefix include/, linear.h doodad.h physics.h chunk.h misc.h)
 doodad.o :    $(addprefix include/, linear.h doodad.h)
 chunk.o :     $(addprefix include/, linear.h chunk.h floodfill.h bsod.h)

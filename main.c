@@ -17,7 +17,6 @@
 #include <loader.h>   // loadConfig, loadWorkspace, saveWorkspace
 #include <engine.h>   //
 #include <clocks.h>   // chron, chronf, setStartTime
-#include <network.h>  //
 #include <bsod.h>     // bsod
 #include <misc.h>     // readBool
 
@@ -137,8 +136,7 @@ int mainThreadProc(void* u){
 
 		if (engine.shouldClose) return 0;
 
-		if(engine.networkStatus == OFFLINE) usleep(1000);
-		else pollNetworkTimeout(3);
+		chill();
 	}
 
 }

@@ -10,4 +10,7 @@ void pressL();
 void pressG();
 void pressN();
 
+void pressR();
+
 void think();
+void chill();

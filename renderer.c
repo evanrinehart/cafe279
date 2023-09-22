@@ -362,13 +362,6 @@ void pressPause(){
 	engine.paused = !engine.paused;
 }
 
-void pressR(){
-	addObject();
-	showRooms();
-
-	for(struct Doodad *d = doodads; d < doodads_ptr; d++) printDoodad(d);
-}
-
 void pressKeypad(int n){
 	if(n==0) overlayMode = 0;
 	if(n==1) { printf("atmo edge overlay\n"); overlayMode = ATMOSPHERIC_EDGE_OVERLAY; }

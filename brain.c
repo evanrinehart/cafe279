@@ -14,6 +14,7 @@
 #include <physics.h>
 #include <chunk.h>
 #include <megaman.h>
+#include <doodad.h>
 #include <network.h>
 #include <messages.h>
 #include <clocks.h>
@@ -228,6 +229,13 @@ void pressP(){
 	if(e<0){ printf("ping failed to send\n"); return; }
 }
 
+void pressR(){
+	addObject();
+	showRooms();
+
+	for(struct Doodad *d = doodads; d < doodads_ptr; d++) printDoodad(d);
+}
+
 // do one update to the world
 void think(){
 
@@ -243,6 +251,10 @@ void think(){
 
 }
 
+void chill() {
+	if(engine.networkStatus == OFFLINE) millisleep(1);
+	else pollNetworkTimeout(3);
+}
 
 void shutdownEverything(){ // (shutdown everything except renderer)
 	disconnectFromServer();
