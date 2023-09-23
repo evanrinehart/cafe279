@@ -44,7 +44,8 @@ void newMessageCb(int connId, unsigned char * data, int datasize){
 	playSound(SND_MURMUR);
 
 	struct Ping ping;
-	int e = parsePing(data, datasize, &ping);
+	struct Slice dataslice = {data, datasize};
+	int e = parsePing(&dataslice, &ping);
 	if(e < 0){ printf("failed to parse PING\n"); return; }
 
 	printf("Ping %d %lf\n", ping.sequence, ping.time);
@@ -52,7 +53,8 @@ void newMessageCb(int connId, unsigned char * data, int datasize){
 	double t = chronf();
 	struct Pong pong = {ping.sequence, ping.time, t};
 	unsigned char buf[256];
-	int size = unparsePong(&pong, buf, 256);
+	struct Slice bufslice = {buf, 256};
+	int size = unparsePong(&pong, &bufslice);
 	if(size < 0){ printf("failed to unparse PONG\n"); return; }
 	e = sendMessageTo(connId, buf, size);
 	if(e < 0){ printf("failed to send PONG\n"); return; }
@@ -70,7 +72,8 @@ void newMessageCb2(int connId, unsigned char * data, int datasize){
 	playSound(SND_MURMUR);
 
 	struct Pong pong;
-	int e = parsePong(data, datasize, &pong);
+	struct Slice dataslice = {data, datasize};
+	int e = parsePong(&dataslice, &pong);
 	if(e < 0){ printf("failed to parse PONG\n"); return; }
 
 	double now = chronf();
@@ -237,7 +240,8 @@ void pressP(){
 	double t = chronf();
 	struct Ping ping = {0, t};
 	unsigned char buf[1024];
-	int size = unparsePing(&ping, buf, 1024);
+	struct Slice slice = {buf, 1024};
+	int size = unparsePing(&ping, &slice);
 	int e = sendMessage(buf, size);
 	if(e<0){ printf("ping failed to send\n"); return; }
 }

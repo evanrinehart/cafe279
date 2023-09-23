@@ -71,7 +71,9 @@ int sendPing(int sequence, double time){
 
 	static unsigned char pingBuf[256];
 
-	int size = unparsePing(&ping, pingBuf, 256);
+	struct Slice bufslice = {pingBuf, 256};
+
+	int size = unparsePing(&ping, &bufslice);
 	if(size < 0){ fprintf(stderr, "failed to encode ping message\n"); return -1; }
 
 	int status = sendMessage(pingBuf, size);

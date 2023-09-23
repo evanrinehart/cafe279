@@ -1,3 +1,8 @@
+struct Slice {
+	unsigned char * ptr;
+	int len;
+};
+
 struct Ping {
 	int sequence;
 	double time;
@@ -9,7 +14,8 @@ struct Pong {
 	double serverTime;
 };
 
-int parsePing(unsigned char * buf, int bufsize, struct Ping *ping);
-int parsePong(unsigned char * buf, int bufsize, struct Pong *pong);
-int unparsePing(struct Ping *ping, unsigned char *buf, int bufsize);
-int unparsePong(struct Pong *pong, unsigned char *buf, int bufsize);
+int unparsePing(struct Ping *ping, struct Slice *buf);
+int parsePing(struct Slice *buf, struct Ping *ping);
+int unparsePong(struct Pong *pong, struct Slice *buf);
+int parsePong(struct Slice *buf, struct Pong *pong);
+
