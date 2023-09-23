@@ -342,17 +342,18 @@ int unparsePong(struct Pong *pong, struct Slice *buf){
 
 int parsePong(struct Slice *buf, struct Pong *pong){
 
+	// parse raw data according to pattern
 	uint16_t seq;
 	double t, st;
-
 	int err = parseMessage(buf, "PONG|{u16}|{f64}|{f64}", &seq, &t, &st);
-
 	if (err) return -1;
 
+	// reject invalid values
 	if (seq > 1000) return -1;
 	if (t < 0)      return -1;
 	if (st < 0)     return -1;
 
+	// construct valid record
 	pong->sequence = seq;
 	pong->time1 = t;
 	pong->serverTime = st;

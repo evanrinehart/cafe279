@@ -1,4 +1,4 @@
-enum SyncStatus { SYNC_INACTIVE, SYNC_WORKING, SYNC_READY };
+enum SyncStatus { SYNC_INACTIVE, SYNC_WORKING, SYNC_READY, SYNC_FAILED };
 
 extern enum SyncStatus syncStatus;
 

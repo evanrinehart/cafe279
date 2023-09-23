@@ -27,6 +27,7 @@ enum SyncStatus syncStatus = SYNC_INACTIVE;
 static int samplesLeft = 0;
 static int sequenceCounter = 0;
 static int cooldown = 0;
+static int timeLeft = 0;
 
 #define NUM_SAMPLES 13
 #define COOLDOWN_TIME 11
@@ -92,10 +93,18 @@ void syncPoll(){
 	else{
 		double now = chronf();
 		int i = sequenceCounter;
-		int status = sendPing(i, now); if (status < 0) return;
-		sequenceCounter++;
-		cooldown = COOLDOWN_TIME;
-		printf("sendPing %d at %lf\n", i, now);
+		if(sequenceCounter < NUM_SAMPLES){
+			int status = sendPing(i, now); if (status < 0) return;
+			sequenceCounter++;
+			cooldown = COOLDOWN_TIME;
+			printf("sendPing %d at %lf\n", i, now);
+		}
+		else if(timeLeft > 0){
+			timeLeft--;
+		}
+		else{
+			syncStatus = SYNC_FAILED;
+		}
 	}
 }
 
@@ -118,6 +127,7 @@ void syncBegin(){
 	cooldown = 0;
 	samplesLeft = NUM_SAMPLES;
 	sequenceCounter = 0;
+	timeLeft = 120;
 
 	for(int i = 0; i < NUM_SAMPLES; i++){
 		samples[i].blank = true;

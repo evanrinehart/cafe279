@@ -90,6 +90,7 @@ void newMessageCb2(int connId, unsigned char * data, int datasize){
 		engine.timeOffset = offset;
 		printf("sync done\n");
 	}
+
 }
 
 void newChunkCb(unsigned char * data, int datasize){
@@ -265,6 +266,14 @@ void think(){
 	}
 
 	syncPoll();
+
+	if(syncStatus == SYNC_FAILED){
+		syncStatus = SYNC_INACTIVE;
+		printf("Sync failed. Disconnecting\n");
+		disconnectFromServer();
+		engine.networkStatus = OFFLINE;
+		playSound(SND_CLOSED);
+	}
 
 	physics();
 
