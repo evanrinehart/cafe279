@@ -1,39 +1,39 @@
 <svg version="1.1" viewBox="0 0 1365.3 997.33" xmlns="http://www.w3.org/2000/svg">
  <defs>
-  <marker id="Arrow2Mstart" overflow="visible" orient="auto">
+  <marker id="Arrow2Mstart" overflow="visible" orient="270">
    <path transform="scale(.6) translate(0)" d="m8.7186 4.0337-10.926-4.0177 10.926-4.0177c-1.7455 2.3721-1.7354 5.6175-6e-7 8.0354z" fill="context-stroke" fill-rule="evenodd" stroke="context-stroke" stroke-linejoin="round" stroke-width=".625"/>
   </marker>
-  <marker id="Arrow2Mend" overflow="visible" orient="auto">
+  <marker id="Arrow2Mend" overflow="visible" orient="0">
    <path transform="scale(.6) rotate(180) translate(0)" d="m8.7186 4.0337-10.926-4.0177 10.926-4.0177c-1.7455 2.3721-1.7354 5.6175-6e-7 8.0354z" fill="context-stroke" fill-rule="evenodd" stroke="context-stroke" stroke-linejoin="round" stroke-width=".625"/>
   </marker>
-  <marker id="Arrow2Mend-3" overflow="visible" orient="auto">
+  <marker id="Arrow2Mend-3" overflow="visible" orient="0">
    <path transform="scale(-.6)" d="m8.7186 4.0337-10.926-4.0177 10.926-4.0177c-1.7455 2.3721-1.7354 5.6175-6e-7 8.0354z" fill="context-stroke" fill-rule="evenodd" stroke="context-stroke" stroke-linejoin="round" stroke-width=".625"/>
   </marker>
-  <marker id="Arrow2Mend-3-0" overflow="visible" orient="auto">
+  <marker id="Arrow2Mend-3-0" overflow="visible" orient="180">
    <path transform="scale(-.6)" d="m8.7186 4.0337-10.926-4.0177 10.926-4.0177c-1.7455 2.3721-1.7354 5.6175-6e-7 8.0354z" fill="context-stroke" fill-rule="evenodd" stroke="context-stroke" stroke-linejoin="round" stroke-width=".625"/>
   </marker>
-  <marker id="Arrow2Mend-3-10" overflow="visible" orient="auto">
+  <marker id="Arrow2Mend-3-10" overflow="visible" orient="270">
    <path transform="scale(-.6)" d="m8.7186 4.0337-10.926-4.0177 10.926-4.0177c-1.7455 2.3721-1.7354 5.6175-6e-7 8.0354z" fill="context-stroke" fill-rule="evenodd" stroke="context-stroke" stroke-linejoin="round" stroke-width=".625"/>
   </marker>
-  <marker id="Arrow2Mend-3-2" overflow="visible" orient="auto">
+  <marker id="Arrow2Mend-3-2" overflow="visible" orient="270">
    <path transform="scale(-.6)" d="m8.7186 4.0337-10.926-4.0177 10.926-4.0177c-1.7455 2.3721-1.7354 5.6175-6e-7 8.0354z" fill="context-stroke" fill-rule="evenodd" stroke="context-stroke" stroke-linejoin="round" stroke-width=".625"/>
   </marker>
-  <marker id="Arrow2Mend-3-5" overflow="visible" orient="auto">
+  <marker id="Arrow2Mend-3-5" overflow="visible" orient="270">
    <path transform="scale(-.6)" d="m8.7186 4.0337-10.926-4.0177 10.926-4.0177c-1.7455 2.3721-1.7354 5.6175-6e-7 8.0354z" fill="context-stroke" fill-rule="evenodd" stroke="context-stroke" stroke-linejoin="round" stroke-width=".625"/>
   </marker>
-  <marker id="Arrow2Mend-3-2-6" overflow="visible" orient="auto">
+  <marker id="Arrow2Mend-3-2-6" overflow="visible" orient="270">
    <path transform="scale(-.6)" d="m8.7186 4.0337-10.926-4.0177 10.926-4.0177c-1.7455 2.3721-1.7354 5.6175-6e-7 8.0354z" fill="context-stroke" fill-rule="evenodd" stroke="context-stroke" stroke-linejoin="round" stroke-width=".625"/>
   </marker>
-  <marker id="Arrow2Mend-3-5-9" overflow="visible" orient="auto">
+  <marker id="Arrow2Mend-3-5-9" overflow="visible" orient="270">
    <path transform="scale(-.6)" d="m8.7186 4.0337-10.926-4.0177 10.926-4.0177c-1.7455 2.3721-1.7354 5.6175-6e-7 8.0354z" fill="context-stroke" fill-rule="evenodd" stroke="context-stroke" stroke-linejoin="round" stroke-width=".625"/>
   </marker>
-  <marker id="Arrow2Mend-3-5-9-4" overflow="visible" orient="auto">
+  <marker id="Arrow2Mend-3-5-9-4" overflow="visible" orient="270">
    <path transform="scale(-.6)" d="m8.7186 4.0337-10.926-4.0177 10.926-4.0177c-1.7455 2.3721-1.7354 5.6175-6e-7 8.0354z" fill="context-stroke" fill-rule="evenodd" stroke="context-stroke" stroke-linejoin="round" stroke-width=".625"/>
   </marker>
-  <marker id="Arrow2Mend-3-5-9-5" overflow="visible" orient="auto">
+  <marker id="Arrow2Mend-3-5-9-5" overflow="visible" orient="270">
    <path transform="scale(-.6)" d="m8.7186 4.0337-10.926-4.0177 10.926-4.0177c-1.7455 2.3721-1.7354 5.6175-6e-7 8.0354z" fill="context-stroke" fill-rule="evenodd" stroke="context-stroke" stroke-linejoin="round" stroke-width=".625"/>
   </marker>
-  <marker id="Arrow2Mend-3-4" overflow="visible" orient="auto">
+  <marker id="Arrow2Mend-3-4" overflow="visible" orient="90">
    <path transform="scale(-.6)" d="m8.7186 4.0337-10.926-4.0177 10.926-4.0177c-1.7455 2.3721-1.7354 5.6175-6e-7 8.0354z" fill="context-stroke" fill-rule="evenodd" stroke="context-stroke" stroke-linejoin="round" stroke-width=".625"/>
   </marker>
  </defs>
