@@ -32,6 +32,20 @@ void initializeEverything(){
 	finishChunkLoading();
 }
 
+
+void syncComplete(double offset){
+	printf("sync done offset = %lf\n", offset);
+	engine.timeOffset = offset;
+	// continue joining game
+}
+
+void syncFailed(){
+	printf("Sync failed. Disconnecting\n");
+	disconnectFromServer();
+	engine.networkStatus = OFFLINE;
+	playSound(SND_CLOSED);
+}
+
 void newConnectionCb(int connId, const char * identifier){
 	printf("New Connection connId=%d identifier=%s\n", connId, identifier);
 	playSound(SND_DSRADIO);
@@ -77,20 +91,8 @@ void newMessageCb2(int connId, unsigned char * data, int datasize){
 	if(e < 0){ printf("failed to parse PONG\n"); return; }
 
 	double now = chronf();
-	printf("Pong %d %lf %lf now=%lf\n", pong.sequence, pong.time1, pong.serverTime, now);
-	printf("time1 = %lf\n", pong.time1);
-	printf("time2 = %lf\n", now);
-	printf("time2 - time1 = %lf\n", now - pong.time1);
 
 	syncPong(pong.sequence, pong.time1, pong.serverTime, now);
-	printSamples();
-
-	if(syncStatus == SYNC_READY){
-		double offset = syncEnd();
-		engine.timeOffset = offset;
-		printf("sync done\n");
-	}
-
 }
 
 void newChunkCb(unsigned char * data, int datasize){
@@ -107,7 +109,9 @@ void connectionSucceededCb(void){
 	playSound(SND_SUCCESS);
 	stopSound(SND_CALLING);
 
-	syncBegin();
+	struct SyncCallbacks cbs = {syncComplete, syncFailed};
+
+	syncBegin(cbs);
 }
 
 void connectionFailedCb(int error){
@@ -126,6 +130,7 @@ void connectionClosedCb(void){
 	printf("connection closed\n");
 	playSound(SND_CLOSED);
 }
+
 
 
 
@@ -254,6 +259,9 @@ void pressR(){
 	for(struct Doodad *d = doodads; d < doodads_ptr; d++) printDoodad(d);
 }
 
+void inputCharacter(int c){
+}
+
 // do one update to the world
 void think(){
 
@@ -266,14 +274,6 @@ void think(){
 	}
 
 	syncPoll();
-
-	if(syncStatus == SYNC_FAILED){
-		syncStatus = SYNC_INACTIVE;
-		printf("Sync failed. Disconnecting\n");
-		disconnectFromServer();
-		engine.networkStatus = OFFLINE;
-		playSound(SND_CLOSED);
-	}
 
 	physics();
 

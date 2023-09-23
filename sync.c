@@ -5,11 +5,9 @@
 
 	* perform several measurements of round trip time to the server
 	* then produce an estimated clock offset between local and server time
-	* then update engine.timeOffset
 
-	From this point on our local notion of serverTime will be close to accurate.
+	It uses callbacks to signal sync complete or sync failed.
 
-	The process takes time so has the form of a resumable procedure.
 */
 
 #include <stdio.h>
@@ -33,6 +31,9 @@ static int timeLeft = 0;
 #define COOLDOWN_TIME 11
 
 static struct Sample samples[NUM_SAMPLES];
+
+static void (*syncCompleteCb)(double offset);
+static void (*syncFailedCb)(void);
 
 void printSamples(){
 	for(int i = 0; i < NUM_SAMPLES; i++){
@@ -103,7 +104,8 @@ void syncPoll(){
 			timeLeft--;
 		}
 		else{
-			syncStatus = SYNC_FAILED;
+			syncStatus = SYNC_INACTIVE;
+			syncFailedCb();
 		}
 	}
 }
@@ -119,42 +121,29 @@ void syncPong(int sequence, double time1, double serverTime, double time2){
 	samples[sequence].blank = false;
 	samplesLeft--;
 	printf("samples left = %d\n", samplesLeft);
-	if(samplesLeft == 0) syncStatus = SYNC_READY;
+	if(samplesLeft == 0) {
+		syncStatus = SYNC_INACTIVE;
+		sortSamples();
+		printf("sorting samples\n\n");
+		printSamples();
+		struct Sample *best = &samples[0]; // fastest sample has least margin of error
+		double oneWayTime = best->rtt / 2;
+		double offset = best->serverTime - (best->time1 + oneWayTime);
+		syncCompleteCb(offset);
+	}
 }
 
-void syncBegin(){
+void syncBegin(struct SyncCallbacks cbs){
 	syncStatus = SYNC_WORKING;
 	cooldown = 0;
 	samplesLeft = NUM_SAMPLES;
 	sequenceCounter = 0;
 	timeLeft = 120;
 
+	syncCompleteCb = cbs.complete;
+	syncFailedCb = cbs.failed;
+
 	for(int i = 0; i < NUM_SAMPLES; i++){
 		samples[i].blank = true;
 	}
-}
-
-double syncEnd(){
-	if(syncStatus != SYNC_READY){
-		fprintf(stderr, "syncEnd called at a bad time\n");
-		return 0;
-	}
-
-	sortSamples();
-
-	printf("sorting samples\n\n");
-
-	printSamples();
-
-	struct Sample *best = &samples[0]; // fastest sample has least margin of error
-
-	double oneWayTime = best->rtt / 2;
-
-	double answer = best->serverTime - (best->time1 + oneWayTime);
-
-	printf("answer = %lf\n", answer);
-
-	syncStatus = SYNC_INACTIVE;
-
-	return answer;
 }

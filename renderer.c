@@ -351,10 +351,6 @@ void mouseWheel(vec2 mouse, double diff){
 	if(diff > 0) zoom *= 2;
 }
 
-void inputCharacter(int c){
-	printf("input character %c\n", c);
-}
-
 void pressPause(){
 	engine.paused = !engine.paused;
 }

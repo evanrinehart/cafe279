@@ -12,5 +12,7 @@ void pressN();
 
 void pressR();
 
+void inputCharacter(int c);
+
 void think();
 void chill();
