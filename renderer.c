@@ -37,7 +37,6 @@ void drawSegment(vec2 a, vec2 b);
 void drawSolidBlock(int i, int j, Color c);
 void drawLabel(vec2 p, const char *txt);
 void drawBall(vec2 p, double r, Color c);
-void drawSprite(Texture tex, vec2 p, int flip);
 void drawUISprite(Texture tex, double x, double y, double zoom);
 
 void drawSpriteBase(Texture tex, vec2 p, int flip);
@@ -132,6 +131,8 @@ static Font infoFont3;
 //static const char* fontpath = "assets/fonts/RobotoCondensed-Regular.ttf";
 static int F = 13;
 
+static Texture circuitTex;
+
 int loadAssets(){
 
 	fprintf(stderr, "%s(%d) loadAssets...\n", __FILE__, __LINE__);
@@ -149,6 +150,10 @@ int loadAssets(){
 	mmtex = LoadTexture("assets/megaman.png");
 	SetTextureWrap(mmtex, TEXTURE_WRAP_CLAMP);
 	megaman.height = mmtex.height;
+
+	circuitTex = LoadTexture("assets/icons/circuitboard.png");
+	GenTextureMipmaps(&circuitTex);
+	SetTextureFilter(circuitTex, TEXTURE_FILTER_TRILINEAR);
 
 	statstex = LoadTexture("assets/status-mock.png");
 	SetTextureWrap(statstex, TEXTURE_WRAP_CLAMP);
@@ -264,7 +269,44 @@ void drawBall(vec2 p, double r, Color c){
 	DrawCircle(screen.x, screen.y, r*zoom, c);
 }
 
-void drawSprite(Texture tex, vec2 p, int flip){
+void drawSprite(Texture tex, vec2 p, double scale, double rotation){
+	double w = scale * tex.width;
+	double h = scale * tex.height;
+
+	vec2 offset = {-w / 2, h / 2};
+	vec2 wcorner = add(offset, p);
+
+	Vector2 scorner = worldToScreen(wcorner);
+	Vector2 scenter = worldToScreen(p);
+
+	Vector2 origin = {scenter.x - scorner.x, scenter.y - scorner.y};
+
+	Rectangle src = {0, 0, tex.width, tex.height};
+	Rectangle dst = {scenter.x, scenter.y, w*zoom, h*zoom};
+
+	DrawTexturePro(tex, src, dst, origin, rotation, WHITE);
+}
+
+void drawSpriteWidth(Texture tex, vec2 p, double width, double rotation){
+	double aspect = tex.height / tex.width;
+	double w = width;
+	double h = aspect * w;
+
+	vec2 offset = {-w / 2, h / 2};
+	vec2 wcorner = add(offset, p);
+
+	Vector2 scorner = worldToScreen(wcorner);
+	Vector2 scenter = worldToScreen(p);
+
+	Vector2 origin = {scenter.x - scorner.x, scenter.y - scorner.y};
+
+	Rectangle src = {0, 0, tex.width, tex.height};
+	Rectangle dst = {scenter.x, scenter.y, w*zoom, h*zoom};
+
+	DrawTexturePro(tex, src, dst, origin, rotation, WHITE);
+}
+
+void drawSpriteH(Texture tex, vec2 p, int flip){
 	vec2 wcorner = add((vec2){-tex.width / 2, tex.width / 2}, p);
 	Vector2 scorner = worldToScreen(wcorner);
 	double sign = flip ? -1 : 1;
@@ -346,9 +388,28 @@ void middleClick(vec2 mouse, int down){
 	mouse_buttons[2] = down;
 }
 
+int zoomLevel = 0;
+
 void mouseWheel(vec2 mouse, double diff){
-	if(diff < 0) zoom /= 2;
-	if(diff > 0) zoom *= 2;
+	if (diff < 0) zoomLevel--;
+	if (diff > 0) zoomLevel++;
+
+	if (zoomLevel > 6) zoomLevel = 6;
+	if (zoomLevel < 0) zoomLevel = 0;
+
+	switch (zoomLevel) {
+		case -3: zoom = 0.125; break;
+		case -2: zoom = 0.25; break;
+		case -1: zoom = 0.5; break;
+		case 0: zoom = 1.0; break;
+		case 1: zoom = 2.0; break;
+		case 2: zoom = 4.0; break;
+		case 3: zoom = 6.0; break;
+		case 4: zoom = 12.0; break;
+		case 5: zoom = 24.0; break;
+		case 6: zoom = 48.0; break;
+		default: zoom = 1.0;
+	}
 }
 
 void pressPause(){
@@ -697,12 +758,27 @@ void rerenderEverything(){
 	/* * megaman * */
 	drawMegaman(vec2(megaman.x, 8), megaman.facing < 0);
 
+	/* test circuit board item images */
+	drawSpriteWidth(circuitTex, vec2(16 * -5, 16 * 4), 48/3, 0);
+
+	drawSpriteWidth(circuitTex, vec2(16 * -6 - 8 + 4, 16 * 4 - 8 + 4), 48/6, 0);
+	drawSpriteWidth(circuitTex, vec2(16 * -6 - 8 + 12, 16 * 4 - 8 + 4), 48/6, 0);
+	drawSpriteWidth(circuitTex, vec2(16 * -6 - 8 + 4, 16 * 4 - 8 + 12), 48/6, 0);
+	drawSpriteWidth(circuitTex, vec2(16 * -6 - 8 + 12, 16 * 4 - 8 + 12), 48/6, 0);
+
+	for(int j = 1; j <= 4; j ++){
+		drawSpriteWidth(circuitTex, vec2(16 * -7 - 8 + 2, 16 * 4 - 8 - 2 + 4*j), 48/12, 0);
+		drawSpriteWidth(circuitTex, vec2(16 * -7 - 8 + 6, 16 * 4 - 8 - 2 + 4*j), 48/12, 0);
+		drawSpriteWidth(circuitTex, vec2(16 * -7 - 8 + 10, 16 * 4 - 8 - 2 + 4*j), 48/12, 0);
+		drawSpriteWidth(circuitTex, vec2(16 * -7 - 8 + 14, 16 * 4 - 8 - 2 + 4*j), 48/12, 0);
+	}
+
 	/* * mock status UI * */
 	Vector2 stats_pos = {30,110};
 	drawUISprite(statstex, stats_pos.x, screen.h - stats_pos.y, 2.0);
 
 	/* doodads */
-	for(struct Doodad *doodad = doodads; doodad < doodads_ptr; doodad++){ drawDoodad(doodad); }
+	//for(struct Doodad *doodad = doodads; doodad < doodads_ptr; doodad++){ drawDoodad(doodad); }
 	for(struct Object *obj = objects; obj < objects_ptr; obj++){ drawObject(obj); }
 
 	/* * debug text * */

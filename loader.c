@@ -138,7 +138,7 @@ int loadConfig(FILE* logfile, const char* filename){
 }
 
 int loadMegaman(){
-	megaman.x = 24;
+	megaman.x = -6 * 16;
 	megaman.facing = 1;
 	return 0;
 }
