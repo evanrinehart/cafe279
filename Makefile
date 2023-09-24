@@ -107,6 +107,9 @@ libenet.a include/enet/enet.h &: vendor/enet
 	cp -r vendor/enet/include/enet include/
 	cp vendor/enet/.libs/libenet.a .
 
+tools/spawner : spawner.c
+	gcc -Wall -Wextra -o tools/spawner spawner.c
+
 clean :
 	rm -f $(EXE_NAME) $(EXE_NAME)-nogfx
 	rm -f $(OBJECTS)
