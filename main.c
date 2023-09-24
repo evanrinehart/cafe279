@@ -33,6 +33,7 @@ int main(int argc, char* argv[]){
 	setStartTime(chron());
 
 	engine.shouldClose = false;
+	engine.finalMsg = NULL;
 	engine.paused = true;
 	engine.frameNumber = 0;
 	engine.timeOffset = 0;
@@ -135,6 +136,7 @@ int mainThreadProc(void* u){
 		mtx_unlock(&masterLock);
 
 		if (engine.shouldClose) return 0;
+		if (engine.finalMsg) return 0;
 
 		chill();
 	}
@@ -149,6 +151,7 @@ int graphicsThreadProc(void *u){
 		mtx_unlock(&masterLock);
 
 		if(windowShouldClose()) { engine.shouldClose = 1; break; }
+		if(engine.finalMsg) { bsodLoop(engine.finalMsg); }
 
 		renderSwap();
 	}

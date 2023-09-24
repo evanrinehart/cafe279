@@ -13,3 +13,5 @@ void shutdownRenderer();
 
 void renderPollInput();
 void renderSwap();
+
+void bsodLoop(const char *);

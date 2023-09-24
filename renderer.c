@@ -724,8 +724,13 @@ void rerenderEverything(){
 	manageVSync();
 }
 
+
+void bsod(const char * finalMsg) {
+	engine.finalMsg = finalMsg;
+}
+
 /* Display BSOD screen until user presses a key to exit */
-void bsod(const char* finalMsg){
+void bsodLoop(const char * finalMsg) {
 
 	fprintf(stderr, "Final message: %s\n", finalMsg);
 
@@ -773,7 +778,11 @@ void bsod(const char* finalMsg){
 			DrawTextEx(errorFont, "Press any key to continue", p2, textsize, 4, RED);
 		EndDrawing();
 
+		SwapScreenBuffer();
+		PollInputEvents();
+
 		if(GetKeyPressed()) exit(1);
+		if(WindowShouldClose()) exit(1);
 	}
 }
 

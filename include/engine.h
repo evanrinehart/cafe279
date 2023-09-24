@@ -16,6 +16,8 @@ struct Engine {
 	bool vsyncHint;
 
 	enum {OFFLINE, SERVER, CLIENT, CONNECTING} networkStatus;
+
+	const char * finalMsg;
 };
 
 extern struct Engine engine;
