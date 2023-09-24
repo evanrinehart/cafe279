@@ -25,9 +25,9 @@ int writeU8(struct Slice *buf, unsigned char u){
 
 int readU16BE(struct Slice *slice, uint16_t *u){
 	if(slice->len < 2) return -1;
-	*u = 0;
-	*u |= slice->ptr[1] << 0;
-	*u |= slice->ptr[0] << 8;
+	uint16_t a = slice->ptr[0];
+	uint16_t b = slice->ptr[1];
+	*u = a << 8 | b;
 	slice->ptr += 2;
 	slice->len -= 2;
 	return 0;
@@ -44,11 +44,11 @@ int writeU16BE(struct Slice *buf, uint16_t u){
 
 int readU32BE(struct Slice *slice, uint32_t *u){
 	if(slice->len < 4) return -1;
-	*u = 0;
-	*u |= slice->ptr[3] << 0;
-	*u |= slice->ptr[2] << 8;
-	*u |= slice->ptr[1] << 16;
-	*u |= slice->ptr[0] << 24;
+	uint32_t a = slice->ptr[0];
+	uint32_t b = slice->ptr[1];
+	uint32_t c = slice->ptr[2];
+	uint32_t d = slice->ptr[3];
+	*u = a << 24 | b << 16 | c << 8 | d;
 	slice->ptr += 4;
 	slice->len -= 4;
 	return 0;
@@ -67,18 +67,18 @@ int writeU32BE(struct Slice *buf, uint32_t u){
 
 int readU64BE(struct Slice *slice, uint64_t *out){
 	if(slice->len < 8) return -1;
-	unsigned long long c;
-	unsigned long long n = 0;
 	unsigned char *data = slice->ptr;
-	c = data[0]; n |= c << (7 * 8);
-	c = data[1]; n |= c << (6 * 8);
-	c = data[2]; n |= c << (5 * 8);
-	c = data[3]; n |= c << (4 * 8);
-	c = data[4]; n |= c << (3 * 8);
-	c = data[5]; n |= c << (2 * 8);
-	c = data[6]; n |= c << (1 * 8);
-	c = data[7]; n |= c << (0 * 8);
-	*out = n;
+	uint64_t a = data[0];
+	uint64_t b = data[1];
+	uint64_t c = data[2];
+	uint64_t d = data[3];
+	uint64_t e = data[4];
+	uint64_t f = data[5];
+	uint64_t g = data[6];
+	uint64_t h = data[7];
+	*out =
+		a << (7*8) | b << (6*8) | c << (5*8) | d << (4*8) |
+		e << (3*8) | f << (2*8) | g << (1*8) | h << (0*8);
 	slice->ptr += 8;
 	slice->len -= 8;
 	return 0;
