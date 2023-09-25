@@ -29,6 +29,7 @@ OBJECTS = \
 	misc.o \
 	messages.o \
 	sync.o \
+	items.o \
 	doodad.o
 
 EXE_NAME = game
@@ -44,6 +45,7 @@ main.o :      $(addprefix include/, linear.h renderer.h brain.h loader.h engine.
 brain.o :     $(addprefix include/, engine.h linear.h sound.h physics.h chunk.h megaman.h doodad.h network.h messages.h clocks.h misc.h)
 physics.o :   $(addprefix include/, linear.h doodad.h physics.h chunk.h misc.h)
 doodad.o :    $(addprefix include/, linear.h doodad.h)
+items.o :    $(addprefix include/, linear.h items.h)
 chunk.o :     $(addprefix include/, linear.h chunk.h floodfill.h bsod.h)
 linear.o :    include/linear.h
 clocks.o :    include/clocks.h

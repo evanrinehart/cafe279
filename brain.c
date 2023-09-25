@@ -20,6 +20,8 @@
 #include <clocks.h>
 #include <misc.h>
 
+#include <items.h>
+
 #include <sync.h>
 
 struct Megaman megaman;
@@ -259,6 +261,41 @@ void pressR(){
 	for(struct Doodad *d = doodads; d < doodads_ptr; d++) printDoodad(d);
 }
 
+void pressI(){
+	int i = 2048 + 16*4 + randi(-30, 30);
+	int j = 2048 + 16*4 + randi(-30, 30);
+	struct LooseItem item;
+	item.i = i;
+	item.j = j;
+	item.code = 0;
+	item.rotation = 0;
+
+	item.di = randi(-1,1);
+	item.dj = randi(-1,1);
+	if(item.di==0 && item.dj==0) item.di = 1;
+	item.timer = 3;
+
+	printf("adding item i=%d j=%d\n", i, j);
+	addLooseItem(&item);
+	printf("ptr - base = %ld\n", looseItems_ptr - looseItems);
+}
+
+void updateLoose() {
+	for(struct LooseItem * item = looseItems; item < looseItems_ptr; item++){
+
+		if(item->timer == 0){
+			item->i += item->di;
+			item->j += item->dj;
+			item->timer = 3;
+		}
+		else{
+			item->timer--;
+		}
+
+	}
+
+}
+
 void inputCharacter(int c){
 }
 
@@ -276,6 +313,9 @@ void think(){
 	syncPoll();
 
 	physics();
+
+
+	updateLoose();
 
 }
 

@@ -10,6 +10,8 @@ void pressL();
 void pressG();
 void pressN();
 
+void pressI();
+
 void pressR();
 
 void inputCharacter(int c);

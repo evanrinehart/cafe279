@@ -18,12 +18,15 @@
 #include <engine.h>
 #include <doodad.h>
 #include <megaman.h>
+#include <items.h>
 #include <chunk.h>
 #include <renderer.h>
 #include <bsod.h>
 #include <physics.h> // temporary
 #include <sound.h>
 #include <brain.h>
+
+#include <misc.h>
 
 vec2 screenToWorld(double screenX, double screenY);
 void getViewBounds(double *l, double *r, double *b, double *t);
@@ -44,6 +47,7 @@ void drawSpriteBase(Texture tex, vec2 p, int flip);
 void drawMegaman(vec2 p, int flip);
 
 enum Overlay {
+	NO_OVERLAY,
 	ATMOSPHERIC_EDGE_OVERLAY,
 	ROOM_BOUNDARY_OVERLAY
 };
@@ -132,6 +136,7 @@ static Font infoFont3;
 static int F = 13;
 
 static Texture circuitTex;
+static Texture circuitTexBL;
 
 int loadAssets(){
 
@@ -151,9 +156,15 @@ int loadAssets(){
 	SetTextureWrap(mmtex, TEXTURE_WRAP_CLAMP);
 	megaman.height = mmtex.height;
 
+	// hacked trilinear settings looks good when items are not actively rotating
 	circuitTex = LoadTexture("assets/icons/circuitboard.png");
 	GenTextureMipmaps(&circuitTex);
 	SetTextureFilter(circuitTex, TEXTURE_FILTER_TRILINEAR);
+
+	// a separate bilinear filtered version can be used on rotating loose items
+	circuitTexBL = LoadTexture("assets/icons/circuitboard.png");
+	GenTextureMipmaps(&circuitTexBL);
+	SetTextureFilter(circuitTexBL, TEXTURE_FILTER_BILINEAR);
 
 	statstex = LoadTexture("assets/status-mock.png");
 	SetTextureWrap(statstex, TEXTURE_WRAP_CLAMP);
@@ -417,7 +428,7 @@ void pressPause(){
 }
 
 void pressKeypad(int n){
-	if(n==0) overlayMode = 0;
+	if(n==0) overlayMode = NO_OVERLAY;
 	if(n==1) { printf("atmo edge overlay\n"); overlayMode = ATMOSPHERIC_EDGE_OVERLAY; }
 	if(n==2) { printf("room boundary overlay\n"); overlayMode = ROOM_BOUNDARY_OVERLAY; }
 }
@@ -491,6 +502,8 @@ void dispatchInput(){
 	if(IsKeyPressed(KEY_L)){ pressL(); }
 	if(IsKeyPressed(KEY_P)){ pressP(); }
 	if(IsKeyPressed(KEY_V)){ pressV(); }
+
+	if(IsKeyPressed(KEY_I)){ pressI(); }
 
 	if(IsKeyDown(KEY_UP))  { holdUpDownArrow(mouse,  1); }
 	if(IsKeyDown(KEY_DOWN)){ holdUpDownArrow(mouse, -1); }
@@ -589,9 +602,12 @@ void renderEdgeOverlay(enum Overlay mode){
 				west = chunk.atmo_edges_v[i][j];
 				south = chunk.atmo_edges_h[i][j];
 			}
-			else{ //ROOM_BOUNDARY_OVERLAY
+			else if(mode == ROOM_BOUNDARY_OVERLAY){ //ROOM_BOUNDARY_OVERLAY
 				west = chunk.room_edges_v[i][j];
 				south = chunk.room_edges_h[i][j];
+			}
+			else{
+				return;
 			}
 
 			vec2 base = {x-8,y-8};
@@ -719,6 +735,13 @@ void drawDoodad(struct Doodad *d){
 	drawLabel(add(offset, d->pos), d->label);
 }
 
+void drawLooseItem(struct LooseItem * item){
+	//printf("rendering %p i=%d j=%d\n", (void*)item, item->i, item->j);
+	vec2 p = {item->i - 128*16, item->j - 128*16};
+	double rot = item->rotation;
+	drawSpriteWidth(circuitTexBL, p, 48/12, rot);
+}
+
 void drawMegaman(vec2 p, int flip){
 	drawSpriteBase(mmtex, p, flip);
 }
@@ -757,6 +780,10 @@ void rerenderEverything(){
 
 	/* * megaman * */
 	drawMegaman(vec2(megaman.x, 8), megaman.facing < 0);
+
+	for(struct LooseItem *ptr = looseItems; ptr < looseItems_ptr; ptr++){
+		drawLooseItem(ptr);
+	}
 
 	/* test circuit board item images */
 	drawSpriteWidth(circuitTex, vec2(16 * -5, 16 * 4), 48/3, 0);
