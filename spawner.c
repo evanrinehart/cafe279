@@ -83,10 +83,11 @@ void generateSource(){
 	printf("#include <%s.h>\n\n", filebase);
 
 	printf("struct %s %s[MAX_%s];\n", typename, camelPlural, capsPlural);
-	printf("struct %s * %s_ptr = %s;\n\n", typename, camelPlural, camelPlural);
+	printf("struct %s * %s_ptr = %s;\n", typename, camelPlural, camelPlural);
+	printf("struct %s * %s_end = %s + MAX_%s;\n\n", typename, camelPlural, camelPlural, capsPlural);
 
 	printf("void add%s(struct %s * p){\n", typename, typename);
-	printf("	if(%s_ptr - %s >= MAX_%s) return;\n", camelPlural, camelPlural, capsPlural);
+	printf("	if(%s_ptr == %s_end) return;\n", camelPlural, camelPlural);
 	printf("	*%s_ptr++ = *p;\n", camelPlural);
 	printf("}\n\n");
 
