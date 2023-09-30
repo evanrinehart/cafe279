@@ -8,6 +8,8 @@
 #include <stdio.h>
 #include <stdbool.h>
 
+#include <math.h>
+
 #include <engine.h>
 #include <linear.h>
 #include <sound.h>
@@ -261,6 +263,38 @@ void pressR(){
 	for(struct Doodad *d = doodads; d < doodads_ptr; d++) printDoodad(d);
 }
 
+void pressLeft(){
+}
+
+void pressRight(){
+}
+
+double xvel = 0;
+double xacc = 0;
+double xvelR = 0;
+double xvelL = 0;
+
+void pressWASD(char wasd, int down){
+	printf("%c %s\n", wasd, down ? "down" : "up");
+	if(wasd=='a') xvelL = down;
+	if(wasd=='d') xvelR = down;
+	xacc = (xvelR - xvelL) / 4;
+	if(xacc == 0) {
+		xvel = 0;
+	}
+}
+
+void clickTile(int i, int j, int ctrl){
+	int b = chunk.block[i][j];
+
+	if(ctrl){
+		chunk.block[i][j] = 0;
+	}
+	else{
+		chunk.block[i][j] = 255;
+	}
+}
+
 void pressI(){
 	int i = 2048 + 16*4 + randi(-30, 30);
 	int j = 2048 + 16*4 + randi(-30, 30);
@@ -299,6 +333,9 @@ void updateLoose() {
 void inputCharacter(int c){
 }
 
+
+
+
 // do one update to the world
 void think(){
 
@@ -314,6 +351,14 @@ void think(){
 
 	physics();
 
+	int MAX = 4;
+
+	xvel += xacc;
+	if(xvel >  MAX) xvel =  MAX;
+	if(xvel < -MAX) xvel = -MAX;
+	megaman.x += xvel;
+
+	//printf("xvel = %lf\n", xvel);
 
 	updateLoose();
 

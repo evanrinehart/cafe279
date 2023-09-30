@@ -366,6 +366,7 @@ void leftClick(vec2 p, int down){
 
 	vec2 q = screenToWorld(p.x, p.y);
 
+/*
 	if(down){
 		struct Doodad * d = findDoodad(q);
 		if(d){ clickDoodad(d); return; }
@@ -378,6 +379,15 @@ void leftClick(vec2 p, int down){
 		putBlock(i, j, blockChoice);
 		return;
 	}
+*/
+
+	int ctrl = IsKeyDown(KEY_LEFT_CONTROL);
+
+	if(down){
+		int i = REDUCE(q.x) + 128;
+		int j = REDUCE(q.y) + 128;
+		clickTile(i,j,ctrl);
+	}
 
 }
 
@@ -386,12 +396,14 @@ void rightClick(vec2 mouse, int down){
 
 	vec2 p = screenToWorld(mouse.x, mouse.y);
 
+/*
 	if(down && tool == BLOCK_EDIT_TOOL){
 		puts("erase block");
 		int i = REDUCE(p.x) + 128;
 		int j = REDUCE(p.y) + 128;
 		eraseBlock(i, j);
 	}
+*/
 
 }
 
@@ -507,6 +519,18 @@ void dispatchInput(){
 
 	if(IsKeyDown(KEY_UP))  { holdUpDownArrow(mouse,  1); }
 	if(IsKeyDown(KEY_DOWN)){ holdUpDownArrow(mouse, -1); }
+
+	if(IsKeyPressed(KEY_LEFT)){ pressLeft(); }
+	if(IsKeyPressed(KEY_RIGHT)){ pressRight(); }
+
+	if(IsKeyPressed(KEY_W)){ pressWASD('w', 1); }
+	if(IsKeyPressed(KEY_A)){ pressWASD('a', 1); }
+	if(IsKeyPressed(KEY_S)){ pressWASD('s', 1); }
+	if(IsKeyPressed(KEY_D)){ pressWASD('d', 1); }
+	if(IsKeyReleased(KEY_W)){ pressWASD('w', 0); }
+	if(IsKeyReleased(KEY_A)){ pressWASD('a', 0); }
+	if(IsKeyReleased(KEY_S)){ pressWASD('s', 0); }
+	if(IsKeyReleased(KEY_D)){ pressWASD('d', 0); }
 
 	int c = 0;
 	while((c = GetCharPressed())){
