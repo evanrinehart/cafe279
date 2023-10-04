@@ -419,7 +419,7 @@ it is moved as far as it can go before hits a surface. In which case normal is
 set to the collision normal and 1 is returned.  If no collision occurs 0 is
 returned. */
 int collideParticle(struct Particle * p, vec2 * normal) {
-	int standoff = 1;
+	int standoff = 128;
 	int n;
 
 	int flag = 0;
@@ -493,12 +493,21 @@ void updateLoose() {
 
 		if (hit) {
 			printf("%f hit %d %d (%lf, %lf)\n", chronf(), hitx, hity, hitn.x, hitn.y);
+			//item->di = 0;
+			//item->dj = 0;
+
 			//printf("before v = %d %d\n", item->di, item->dj);
 			vec2 v = vec2(item->di, item->dj);
+			//printf("vec2 v  before = %f %f\n", v.x,v.y);
 			vec2 vprime = reflection(v, rotate(hitn,PI/2));
+			//printf("vec2 v  after = %f %f\n", vprime.x,vprime.y);
 			item->di = vprime.x;
 			item->dj = vprime.y;
 			//printf("after v = %d %d\n", item->di, item->dj);
+
+			// this moves them away from the wall supposely
+			item->i += item->di;
+			item->j += item->dj;
 		}
 
 	}
@@ -554,7 +563,7 @@ void spawnItem(double x, double y){
 
 	item.i = world2raw(x + 8);
 	item.j = world2raw(y + 8);
-	item.di = 128;
+	item.di = 0;
 	item.dj = 128;
 	item.angle = 0;
 	item.spin = 0;
