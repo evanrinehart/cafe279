@@ -66,7 +66,7 @@ extern struct World {
 static Font errorFont;
 static Texture errorIcon;
 
-vec2 camera = {0,0};
+struct {int x; int y;} camera = {0,0};
 double zoom = 1;
 
 enum Overlay overlayMode;
@@ -128,12 +128,12 @@ int windowShouldClose(){
 
 static int icon_count = 0;
 //static Texture icons[256];
-static Font infoFont;
-static Font infoFont2;
-static Font infoFont3;
+//static Font infoFont;
+//static Font infoFont2;
+//static Font infoFont3;
 
 //static const char* fontpath = "assets/fonts/RobotoCondensed-Regular.ttf";
-static int F = 13;
+//static int F = 13;
 
 static Texture circuitTex;
 static Texture circuitTexBL;
@@ -179,24 +179,25 @@ int loadAssets(){
 
 
 Vector2 worldToScreen(vec2 p){
-	double x = floor( zoom * p.x + screen.w/2 - zoom * camera.x);
-	double y = floor(-zoom * p.y + screen.h/2 + zoom * camera.y);
-	Vector2 v = {x,y};
-	return v;
+	//double x = floor( zoom * p.x + screen.w/2 - zoom * camera.x / zoom);
+	//double y = floor(-zoom * p.y + screen.h/2 + zoom * camera.y / zoom);
+	// if you do math right, floor isn't necessary for exact results
+	double x =  zoom * p.x + screen.w/2 - zoom * camera.x / zoom;
+	double y = -zoom * p.y + screen.h/2 + zoom * camera.y / zoom;
+	return (Vector2){x,y};
 }
 
 vec2 screenToWorld(double screenX, double screenY){
-	double x = (screenX + zoom*camera.x - screen.w/2) / zoom;
-	double y = (screenY - zoom*camera.y - screen.h/2) / -zoom;
-	vec2 v = {x,y};
-	return v;
+	double x = (screenX + zoom * camera.x / zoom - screen.w/2) / zoom;
+	double y = (screenY - zoom * camera.y / zoom - screen.h/2) / -zoom;
+	return vec2(x,y);
 }
 
 void getViewBounds(double *l, double *r, double *b, double *t){
-	*l = camera.x - screen.w/2/zoom;
-	*r = camera.x + screen.w/2/zoom;
-	*b = camera.y - screen.h/2/zoom;
-	*t = camera.y + screen.h/2/zoom;
+	*l = camera.x/zoom - screen.w/2/zoom;
+	*r = camera.x/zoom + screen.w/2/zoom;
+	*b = camera.y/zoom - screen.h/2/zoom;
+	*t = camera.y/zoom + screen.h/2/zoom;
 }
 
 void drawVerticalRule(double worldX, Color c){
@@ -350,22 +351,49 @@ void drawUISprite(Texture tex, double x, double y, double zoom){
 
 /* Controller */
 
+
+
 void mouseMotion(vec2 mouse, vec2 delta){
 	// mouse_diff might be large for reasons, don't assume it's small
 
 	/* pan service code: */
 	if(mouse_buttons[2]){
-		camera.x -=  delta.x/zoom;
-		camera.y -= -delta.y/zoom;
+		camera.x -= delta.x;
+		camera.y += delta.y;
 	}
 	/* end of pan code. */
 }
+
+#define world2raw(X) (((X) + 2048 + 8) * 256)
+#define raw2world(I) (((I) / 256.0) - 2048.0 - 8.0)
+#define double2raw(X) ((X) * 256.0)
+#define raw2double(I) ((I) / 256.0)
 
 void leftClick(vec2 p, int down){
 	mouse_buttons[0] = down;
 
 	vec2 q = screenToWorld(p.x, p.y);
 
+	if(down){
+		int x = world2raw(q.x);
+		int y = world2raw(q.y);
+		//int measure = probeUp(x,y);
+		//int measure = probeLeft(x,y);
+		//int measure = probeRight(x,y);
+		int normal = 0;
+		int measure = probeDown(x,y, &normal);
+		printf("click %d:%d %d:%d measure = %d, normal = %d\n", x/256, x%256, y/256, y%256, measure, normal);
+
+		spawnItem(q.x, q.y);
+	}
+
+	int ctrl = IsKeyDown(KEY_LEFT_CONTROL);
+
+	if(down){
+		int i = REDUCE(q.x) + 128;
+		int j = REDUCE(q.y) + 128;
+		//clickTile(i,j,ctrl);
+	}
 /*
 	if(down){
 		struct Doodad * d = findDoodad(q);
@@ -379,24 +407,23 @@ void leftClick(vec2 p, int down){
 		putBlock(i, j, blockChoice);
 		return;
 	}
+
 */
-
-	int ctrl = IsKeyDown(KEY_LEFT_CONTROL);
-
-	if(down){
-		int i = REDUCE(q.x) + 128;
-		int j = REDUCE(q.y) + 128;
-		clickTile(i,j,ctrl);
-	}
 
 }
 
 void rightClick(vec2 mouse, int down){
 	mouse_buttons[1] = down;
 
-	vec2 p = screenToWorld(mouse.x, mouse.y);
+	vec2 q = screenToWorld(mouse.x, mouse.y);
 
+	if(down){
+		int i = REDUCE(q.x) + 128;
+		int j = REDUCE(q.y) + 128;
+		rightClickTile(i,j);
+	}
 /*
+
 	if(down && tool == BLOCK_EDIT_TOOL){
 		puts("erase block");
 		int i = REDUCE(p.x) + 128;
@@ -413,26 +440,63 @@ void middleClick(vec2 mouse, int down){
 
 int zoomLevel = 0;
 
-void mouseWheel(vec2 mouse, double diff){
-	if (diff < 0) zoomLevel--;
-	if (diff > 0) zoomLevel++;
-
-	if (zoomLevel > 6) zoomLevel = 6;
-	if (zoomLevel < 0) zoomLevel = 0;
-
+double zoomFactorAtLevel(int zoomLevel) {
 	switch (zoomLevel) {
-		case -3: zoom = 0.125; break;
-		case -2: zoom = 0.25; break;
-		case -1: zoom = 0.5; break;
-		case 0: zoom = 1.0; break;
-		case 1: zoom = 2.0; break;
-		case 2: zoom = 4.0; break;
-		case 3: zoom = 6.0; break;
-		case 4: zoom = 12.0; break;
-		case 5: zoom = 24.0; break;
-		case 6: zoom = 48.0; break;
-		default: zoom = 1.0;
+		case -3: return 0.125;
+		case -2: return 0.25;
+		case -1: return 0.5;
+		case 0: return 1.0;
+		case 1: return 2.0;
+		case 2: return 4.0;
+		case 3: return 6.0;
+		case 4: return 12.0;
+		case 5: return 24.0;
+		case 6: return 48.0;
+		default: return 1.0;
 	}
+}
+
+void zoomIn(){
+	if(zoomLevel == 6) return;
+
+	int numer = 2;
+	int denom = 1;
+
+	if(zoomLevel == 2){
+		numer = 3;
+		denom = 2;
+	}
+
+	zoomLevel++;
+
+	zoom = zoomFactorAtLevel(zoomLevel);
+
+	camera.x = numer * camera.x / denom;
+	camera.y = numer * camera.y / denom;
+}
+
+void zoomOut(){
+	if(zoomLevel == 0) return;
+
+	int numer = 1;
+	int denom = 2;
+
+	if(zoomLevel == 3){
+		numer = 2;
+		denom = 3;
+	}
+
+	zoomLevel--;
+
+	zoom = zoomFactorAtLevel(zoomLevel);
+
+	camera.x = numer * camera.x / denom;
+	camera.y = numer * camera.y / denom;
+}
+
+void mouseWheel(vec2 mouse, double diff){
+	if (diff < 0) zoomOut();
+	if (diff > 0) zoomIn();
 }
 
 void pressPause(){
@@ -456,7 +520,6 @@ void holdUpDownArrow(vec2 mouse, int updown){
 	if(updown > 0) printf("room %d pump it up! %d\n", room->id, room->air);
 	else           printf("room %d deflating! %d\n", room->id, room->air);
 }
-
 
 
 
@@ -516,6 +579,7 @@ void dispatchInput(){
 	if(IsKeyPressed(KEY_V)){ pressV(); }
 
 	if(IsKeyPressed(KEY_I)){ pressI(); }
+	if(IsKeyPressed(KEY_Z)){ pressZ(); }
 
 	if(IsKeyDown(KEY_UP))  { holdUpDownArrow(mouse,  1); }
 	if(IsKeyDown(KEY_DOWN)){ holdUpDownArrow(mouse, -1); }
@@ -531,6 +595,17 @@ void dispatchInput(){
 	if(IsKeyReleased(KEY_A)){ pressWASD('a', 0); }
 	if(IsKeyReleased(KEY_S)){ pressWASD('s', 0); }
 	if(IsKeyReleased(KEY_D)){ pressWASD('d', 0); }
+
+	if(IsKeyPressed(KEY_ONE))  { pressNumber(1); }
+	if(IsKeyPressed(KEY_TWO))  { pressNumber(2); }
+	if(IsKeyPressed(KEY_THREE)){ pressNumber(3); }
+	if(IsKeyPressed(KEY_FOUR)) { pressNumber(4); }
+	if(IsKeyPressed(KEY_FIVE)) { pressNumber(5); }
+	if(IsKeyPressed(KEY_SIX))  { pressNumber(6); }
+	if(IsKeyPressed(KEY_SEVEN)){ pressNumber(7); }
+	if(IsKeyPressed(KEY_EIGHT)){ pressNumber(8); }
+	if(IsKeyPressed(KEY_NINE)) { pressNumber(9); }
+	if(IsKeyPressed(KEY_ZERO)) { pressNumber(0); }
 
 	int c = 0;
 	while((c = GetCharPressed())){
@@ -760,9 +835,17 @@ void drawDoodad(struct Doodad *d){
 }
 
 void drawLooseItem(struct LooseItem * item){
+	//printf("item->i = %d:%d, ", item->i / 256, item->i % 256);
 	//printf("rendering %p i=%d j=%d\n", (void*)item, item->i, item->j);
-	vec2 p = {item->i - 128*16, item->j - 128*16};
-	double rot = item->rotation;
+
+	// raw coordinates zero is in bottom left corner of bottom left tile.
+	// world coordinates zero is in the center of tile 128 128
+
+	double x = item->i/256.0 - 128*16 - 8;
+	double y = item->j/256.0 - 128*16 - 8;
+	//printf("x = %lf\n", x);
+	vec2 p = {x, y};
+	double rot = item->angle;
 	drawSpriteWidth(circuitTexBL, p, 48/12, rot);
 }
 

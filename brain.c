@@ -7,6 +7,7 @@
 
 #include <stdio.h>
 #include <stdbool.h>
+#include <stdlib.h>
 
 #include <math.h>
 
@@ -284,46 +285,220 @@ void pressWASD(char wasd, int down){
 	}
 }
 
+int chosen_block = 255;
+
 void clickTile(int i, int j, int ctrl){
-	int b = chunk.block[i][j];
+	int *b = &chunk.block[i][j];
 
 	if(ctrl){
-		chunk.block[i][j] = 0;
+		*b = 0;
 	}
 	else{
-		chunk.block[i][j] = 255;
+		*b = chosen_block;
 	}
 }
 
-void pressI(){
-	int i = 2048 + 16*4 + randi(-30, 30);
-	int j = 2048 + 16*4 + randi(-30, 30);
-	struct LooseItem item;
-	item.i = i;
-	item.j = j;
-	item.code = 0;
-	item.rotation = 0;
+void pressNumber(int d) {
+	int a = chosen_block / 100;
+	int b = (chosen_block % 100) / 10;
+	int c = chosen_block % 10;
 
-	item.di = randi(-1,1);
-	item.dj = randi(-1,1);
-	if(item.di==0 && item.dj==0) item.di = 1;
-	item.timer = 3;
+	int x = b;
+	int y = c;
+	int z = d;
 
-	printf("adding item i=%d j=%d\n", i, j);
-	addLooseItem(&item);
-	printf("ptr - base = %ld\n", looseItems_ptr - looseItems);
+	chosen_block = x * 100 + y * 10 + z;
+
+	printf("a b c = %d %d %d\n", a, b, c);
+	printf("x y z = %d %d %d\n", a, b, c);
+	printf("chosen block = %d\n", chosen_block);
 }
 
-void updateLoose() {
-	for(struct LooseItem * item = looseItems; item < looseItems_ptr; item++){
+void rightClickTile(int i, int j){
+	int *b = &chunk.block[i][j];
+	*b = 0;
+}
 
-		if(item->timer == 0){
-			item->i += item->di;
-			item->j += item->dj;
-			item->timer = 3;
+void pressZ(){
+	looseItems_ptr = looseItems;
+}
+
+#define world2raw(X) (((X) + 2048) * 256)
+#define raw2world(I) (((I) / 256.0) - 2048.0)
+#define double2raw(X) ((X) * 256.0)
+#define raw2double(I) ((I) / 256.0)
+
+void pressI(){
+	double x = 16*4 + randi(-30,30);
+	double y = 16*4 + randi(-30,30);
+
+	//double x= 16*3;
+	//ldouble y= 16*4;
+
+	struct LooseItem item;
+	item.i = world2raw(x);
+	item.j = world2raw(y);
+
+	item.angle = 0;
+	item.spin  = 0;
+
+	item.di = randi(-256,256);
+	item.dj = randi(-256,256);
+	//item.di = 50;
+	//item.dj = 100;
+
+/*
+	item.i = 542944 - 239;
+	item.j = 531632 - 93;
+	item.di = -239;
+	item.dj = -93;
+*/
+
+//printf("%d %d %d %d\n", item.i, item.j, item.di, item.dj);
+
+/*
+	chunk.block[130][129] = 192;
+	chunk.block[131][129] = 193;
+	chunk.block[132][129] = 194;
+	chunk.block[133][129] = 195;
+	chunk.block[134][129] = 196;
+
+
+	chunk.block[130][129] = 224;
+	chunk.block[131][129] = 225;
+	chunk.block[132][129] = 226;
+	chunk.block[133][129] = 227;
+	chunk.block[134][129] = 228;
+
+
+	chunk.block[130][129] = 240;
+	chunk.block[131][129] = 241;
+	chunk.block[132][129] = 242;
+	chunk.block[133][129] = 243;
+	chunk.block[134][129] = 244;
+
+	chunk.block[130][129] = 245;
+	chunk.block[131][129] = 246;
+	chunk.block[132][129] = 247;
+	chunk.block[133][129] = 248;
+	chunk.block[134][129] = 249;
+*/
+
+	addLooseItem(&item);
+	//printf("ptr - base = %ld\n", looseItems_ptr - looseItems);
+}
+
+#define PI M_PI
+
+vec2 vec2FromNormal(int n) {
+	double angle = 2.0 * PI * n / 4096.0 + PI / 2;
+	return cis(angle);
+}
+
+int ccount = 0;
+
+/* particle-type collision algorithm
+
+- a particle has spatial extent and "sensors" on 4 sides.
+- at most 2 sensors are used to determine imminent collision
+- first, if either sensor determines that the particle is partially inside a solid
+	the particle is minimum moved out along that axis
+- second, if velocity in either direction would cross the surface, a collision is reported
+
+- the X sensor and Y sensor data can be collected before acting on the particle or issuing a collision
+
+*/
+
+struct Particle {
+	int x, y;
+	int dx, dy;
+};
+
+/* moving particle p is depenetrated from any solid it is moving into then
+it is moved as far as it can go before hits a surface. In which case normal is
+set to the collision normal and 1 is returned.  If no collision occurs 0 is
+returned. */
+int collideParticle(struct Particle * p, vec2 * normal) {
+	int standoff = 1;
+	int n;
+
+	int flag = 0;
+
+	if(p->dy < 0){
+		int ping = probeDown(p->x, p->y - standoff, &n);
+		if(ping >= 0 && -p->dy <= ping){ // any surface is beyond the range of desired jump
+			p->y += p->dy; // move normally
 		}
 		else{
-			item->timer--;
+			p->y -= ping; // moves p to collision point, which might be backwards if depenetrating
+			*normal = vec2FromNormal(n);
+			flag = 1;
+		}
+	}
+	else if(p->dy > 0){
+		int ping = probeUp(p->x, p->y + standoff, &n);
+		if(ping >= 0 && p->dy <= ping){
+			p->y += p->dy;
+		}
+		else{
+			p->y += ping;
+			*normal = vec2FromNormal(n);
+			flag = 1;
+		}
+	}
+
+	if(p->dx < 0){
+		int ping = probeLeft(p->x - standoff, p->y, &n);
+		if(ping >= 0 && -p->dx <= ping){
+			p->x += p->dx;
+		}
+		else{
+			p->x -= ping;
+			*normal = vec2FromNormal(n);
+			flag = 1;
+		}
+	}
+	else if(p->dx > 0){
+		int ping = probeRight(p->x + standoff, p->y, &n);
+		if(ping >= 0 && p->dx <= ping){
+			p->x += p->dx;
+		}
+		else{
+			p->x += ping;
+			*normal = vec2FromNormal(n);
+			flag = 1;
+		}
+	}
+
+	return flag;
+
+}
+
+
+
+void updateLoose() {
+
+	for(struct LooseItem * item = looseItems; item < looseItems_ptr; item++){
+
+		item->angle += item->spin;
+
+		int hitx;
+		int hity;
+		vec2 hitn;
+
+		struct Particle p = {item->i, item->j, item->di, item->dj};
+		int hit = collideParticle(&p, &hitn);
+		item->i = p.x;
+		item->j = p.y;
+
+		if (hit) {
+			printf("%f hit %d %d (%lf, %lf)\n", chronf(), hitx, hity, hitn.x, hitn.y);
+			//printf("before v = %d %d\n", item->di, item->dj);
+			vec2 v = vec2(item->di, item->dj);
+			vec2 vprime = reflection(v, rotate(hitn,PI/2));
+			item->di = vprime.x;
+			item->dj = vprime.y;
+			//printf("after v = %d %d\n", item->di, item->dj);
 		}
 
 	}
@@ -372,4 +547,17 @@ void chill() {
 void shutdownEverything(){ // (shutdown everything except renderer)
 	disconnectFromServer();
 	netDisableServer();
+}
+
+void spawnItem(double x, double y){
+	struct LooseItem item;
+
+	item.i = world2raw(x + 8);
+	item.j = world2raw(y + 8);
+	item.di = 128;
+	item.dj = 128;
+	item.angle = 0;
+	item.spin = 0;
+
+	addLooseItem(&item);
 }

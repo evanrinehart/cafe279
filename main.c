@@ -123,7 +123,8 @@ int mainThreadProc(void* u){
 			engine.inputFresh = false;
 		}
 
-		int totalUpdates = floor((engine.localTime - updateZeroTime) * 60.0);
+		double timewarp = 1.0; 
+		int totalUpdates = floor((engine.localTime - updateZeroTime) * timewarp * 60.0);
 		int missedUpdates = totalUpdates - highestUpdateCompleted;
 
 		for(int i = 0; i < missedUpdates; i++){

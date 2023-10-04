@@ -18,6 +18,14 @@ struct Vec2Pair {
 	vec2 b;
 };
 
+struct fix8 {
+	int to_i;
+};
+
+typedef struct fix8 fix8;
+
+#define fix8(X) ((fix8){X})
+
 
 #define vec2(X,Y) ((vec2){X,Y})
 

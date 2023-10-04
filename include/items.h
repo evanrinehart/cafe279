@@ -1,12 +1,11 @@
 struct LooseItem {
-	short i; // pixels
-	short j;
-	short code;
-	short rotation;
-
-	short di;
-	short dj;
-	short timer;
+	int i; // pixels (fix8)
+	int j;
+	int di;
+	int dj;
+	int angle;
+	int spin;
+	int resting;
 };
 
 #define MAX_LOOSE_ITEMS 1024

@@ -41,8 +41,8 @@ $(EXE_NAME)-nogfx : $(OBJECTS) nullrenderer.o nullsound.o sqlite3.o libenet.a
 	gcc -o $(EXE_NAME)-nogfx $(OBJECTS) nullrenderer.o nullsound.o sqlite3.o libenet.a $(LIBS)
 
 # implicit rules and compile action for .c files used here
-main.o :      $(addprefix include/, linear.h renderer.h brain.h loader.h engine.h clocks.h network.h bsod.h misc.h)
-brain.o :     $(addprefix include/, engine.h linear.h sound.h physics.h chunk.h megaman.h doodad.h network.h messages.h clocks.h misc.h)
+main.o :      $(addprefix include/, linear.h renderer.h brain.h loader.h engine.h clocks.h network.h bsod.h misc.h items.h)
+brain.o :     $(addprefix include/, engine.h linear.h sound.h physics.h chunk.h megaman.h doodad.h network.h messages.h clocks.h misc.h items.h)
 physics.o :   $(addprefix include/, linear.h doodad.h physics.h chunk.h misc.h)
 doodad.o :    $(addprefix include/, linear.h doodad.h)
 items.o :    $(addprefix include/, linear.h items.h)
@@ -52,7 +52,7 @@ clocks.o :    include/clocks.h
 floodfill.o : include/floodfill.h
 messages.o :  include/messages.h
 misc.o :      include/misc.h
-renderer.o :  $(addprefix include/, raylib.h linear.h engine.h doodad.h megaman.h chunk.h renderer.h bsod.h physics.h sound.h brain.h)
+renderer.o :  $(addprefix include/, raylib.h linear.h engine.h doodad.h megaman.h chunk.h renderer.h bsod.h physics.h sound.h brain.h items.h misc.h)
 sound.o :     $(addprefix include/, raylib.h sound.h)
 loader.o :    $(addprefix include/, loader.h sqlite3.h linear.h doodad.h megaman.h chunk.h)
 network.o :   $(addprefix include/, enet/enet.h network.h)

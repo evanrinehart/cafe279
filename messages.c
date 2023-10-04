@@ -110,9 +110,11 @@ int writeF64BE(struct Slice *buf, double x){
 
 	uint64_t chunk1 = mant < 0 ? 1 : 0;
 	uint64_t chunk2 = expo + 1023;
-	uint64_t chunk3 = scalbn(fabs(mant), 52);
+	uint64_t chunk3 = scalbn(fabs(mant), 53); // this number always starts with a 1 and can be omitted
 
-	uint64_t code = chunk1 << 63 | chunk2 << 52 | chunk3;
+	uint64_t mask = (1ULL << 52) - 1;
+
+	uint64_t code = chunk1 << 63 | chunk2 << 52 | (chunk3 & mask);
 
 	return writeU64BE(buf, code);
 }
@@ -125,7 +127,9 @@ int readF64BE(struct Slice *slice, double *out){
 
 	uint64_t sign   = (n >> 63) & 0x1UL;
 	uint64_t chunk2 = (n >> 52) & 0x7ffUL;
-	uint64_t chunk3 = (n >> 0)  & 0xfffffffffffffUL;
+	uint64_t chunk3 = (n >> 0)  & 0xfffffffffffffUL; // encoder omitted leading bit so must be restored
+
+	chunk3 |= (1ULL << 52);
 
 	int expo = chunk2 - 1023;
 	double mant = chunk3;

@@ -34,3 +34,11 @@ bool readBool(const char * string){
 	if(sscanf(string, "false") > 0) return false;
 	return false;
 }
+
+const char * strFix8(int raw) {
+	int q = raw / 256;
+	int r = raw % 256;
+	static char buf[64];
+	sprintf(buf, "%s%d:%d", raw < 0 ? "-" : "", abs(q), abs(r));
+	return buf;
+}

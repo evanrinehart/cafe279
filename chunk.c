@@ -410,3 +410,403 @@ int roomExists(int rid, int *outi, int *outj){
 	}
 	return 0;
 }
+
+
+/*
+void rotateRaw(enum Rot rot, int x, int y, int *xout, int *yout) {
+	int top = 1 << 20;
+	switch (rot) {
+	case THREE_HOURS:
+		*xout = y;
+		*yout = top - x;
+		break;
+	case SIX_HOURS:
+		*xout = top - x;
+		*yout = top - y;
+		break;
+	case NINE_HOURS:
+		*xout = top - y;
+		*yout = x;
+		break;
+	case ZERO_HOURS:
+		*xout = x;
+		*yout = y;
+		break;
+	}
+}
+
+int rotBlock(int block) {
+	switch (block) {
+	case 0:   return 0;
+	case 245:
+	case 246:
+	case 247:
+	case 248:
+	case 249: // because we mixed up block shape with block graphics
+	case 250:
+	case 251:
+	case 252:
+	case 253:
+	case 254:
+	case 255: return 255;
+	case 242: return 226;
+	case 241: return 193;
+	case 243: return 227;
+	case 240: return 192;
+	case 244: return 228;
+	case 212: return 196;
+	case 196: return 244;
+	case 225: return 241;
+	case 226: return 210;
+	case 224: return 240;
+	case 227: return 211;
+	case 228: return 212;
+	case 210: return 194;
+	case 209: return 225;
+	case 211: return 195;
+	case 208: return 224;
+	case 193: return 209;
+	case 194: return 242;
+	case 192: return 208;
+	case 195: return 243;
+	default:  return 248;
+	}
+}
+*/
+
+
+
+
+//need function or macro to get a block in the chunk for any i
+//handling the out of bounds cases by returning zero
+
+int getBlock(int i, int j) {
+	if(i < 0 || i > 255 || j < 0 || j > 255) return 0;
+	return chunk.block[i][j];
+}
+
+
+/*
+	The API is like int probeDIRECTION(int x, int y, int * normal);  returning distance and surface normal found
+
+	The implementation is based on probing DOWN on a small base set of profiles. Probing other directions is
+	done by rotating the profile and unrotating the results.
+*/
+
+int profileDepthBase(int profile, int xmod) {
+	switch (profile) {
+	case   0: return 0; // nothing
+	case   1: return 4096; // full block
+	case   2: return 2048; // half block
+	case   3: return xmod < 2048 ? 0 : 4096; // right half block
+	case   4: return xmod / 2; // floor wedge
+	case   5: return xmod / 2 + 2048; // wedge raised up half
+	case   6: return xmod < 2048 ? 0 : 2 * (xmod - 2048); // right wedge
+	case   7: return xmod < 2048 ? 2 * xmod : 4096; // right wedge pushed left half
+	default:
+		fprintf(stderr, "%s(%d) profileDepthBase bad base profile (%d)\n", __FILE__, __LINE__, profile);
+		exit(1);
+	}
+}
+
+int profileNormalBase(int profile, int xmod) {
+	switch (profile) {
+	case   0: return 0;   // nothing
+	case   1: return 0;   // full block
+	case   2: return 0;   // half block
+	case   3: return 0;   // right half block
+	case   4: return 302; // floor wedge
+	case   5: return 302; // wedge raised up half
+	case   6: return xmod < 2048 ? 0 : 722; // right wedge
+	case   7: return xmod < 2048 ? 722 : 0; // right wedge pushed left half
+	default:
+		fprintf(stderr, "%s(%d) profileNormalBase bad base profile (%d)\n", __FILE__, __LINE__, profile);
+		exit(1);
+	}
+}
+
+// get the depth at xmod of any profile
+int profileDepth(int profile, int xmod) {
+	int xmirror = profile < 0 ? 4096 - xmod : xmod;
+	int positive = abs(profile);
+	int base = positive > 10 ? positive - 10 : positive;
+	return profileDepthBase(base, xmirror) - (positive > 10 ? 4096 : 0);
+}
+
+// get the normal at xmod of any profile
+int profileNormal(int profile, int xmod) {
+	int mirror = profile < 0;
+	int xmirror = mirror ? 4096 - xmod : xmod;
+	int positive = abs(profile);
+	int ceiling = positive > 10;
+	int base = ceiling ? positive - 10 : positive;
+	int normal = profileNormalBase(base, xmirror);
+	if(ceiling) normal += 2048;
+	if(mirror) normal = -normal;
+	return normal;
+}
+
+// rotate a profile 90 degrees clockwise
+int rotateProfile(int profile) {
+	switch (profile) {
+	case 0: return 0;
+	case 1: return 1;
+
+	// half block
+	case  2: return -3;
+	case -3: return 12;
+	case 12: return  3;
+	case  3: return  2;
+
+	// floor wedge
+	case   4: return  -6;
+	case  -6: return  15;
+	case  15: return -17;
+	case -17: return   4;
+
+	// wedge raised up half
+	case   5: return  -7;
+	case  -7: return  14;
+	case  14: return -16;
+	case -16: return   5;
+
+	// right wedge
+	case   6: return  -4;
+	case  -4: return  17;
+	case  17: return -15;
+	case -15: return   6;
+
+	// right wedge pushed left half
+	case   7: return  -5;
+	case  -5: return  16;
+	case  16: return -14;
+	case -14: return   7;
+
+	default:
+		fprintf(stderr, "rotateProfile bad profile (%d)\n", profile);
+		exit(1);
+	}
+}
+
+int normalizeNormalCode(int n) {
+	while(n >  2048) n -= 4096;
+	while(n < -2048) n += 4096;
+	return n;
+}
+
+// profile for block
+int blockProfile(int block) {
+
+	if (block == 0)   return 0;
+	if (block >= 245) return 1;
+
+	switch(block){
+	case 192: return  16;
+	case 193: return  17;
+	case 194: return -17;
+	case 195: return -16;
+	case 196: return   2;
+	case 208: return -14;
+	case 209: return -15;
+	case 210: return  15;
+	case 211: return  14;
+	case 212: return   3;
+	case 224: return   7;
+	case 225: return   6;
+	case 226: return  -6;
+	case 227: return  -7;
+	case 228: return  12;
+	case 240: return  -5;
+	case 241: return  -4;
+	case 242: return   4;
+	case 243: return   5;
+	case 244: return  -3;
+	default:  return   1;
+	}
+
+}
+
+// main probe algorithm, only down
+int surfacePingDown(int xmod, int ymod, int profileUp, int profile, int profileDown, int * normal) {
+
+	int extra1 = 4096 - ymod;
+	int extra2;
+
+	int surf = profileDepth(profile, xmod);
+
+	if      (surf < 0 && ymod > surf + 4096) goto go_up;     //we're in a ceiling
+	else if (surf <= 0)                      goto go_down;   //we're outside and nothing's below
+	else if (surf == 4096)                   goto go_up;     //we're in a solid block
+	else                                     goto stay_here; //we're above a surface
+
+go_up:
+	extra2 = profileDepth(profileUp, xmod);
+	if (extra2 <= 0) {
+		*normal = 0;
+		return -extra1;
+	}
+	else {
+		*normal = profileNormal(profileUp, xmod);
+		return -(extra1 + extra2);
+	}
+
+go_down:
+	extra2 = profileDepth(profileDown, xmod);
+	if (extra2 == 4096 || extra2 < 0) {
+		*normal = 0;
+		return ymod;
+	}
+	else {
+		*normal = profileNormal(profileDown, xmod);
+		return ymod + (4096 - extra2);
+	}
+
+stay_here:
+	*normal = profileNormal(profile, xmod);
+	return ymod - surf;
+
+}
+
+// 4 api methods which probe 4 directions
+int probeDown(int x, int y, int * normal) {
+
+	if (x < 0 || y < 0 || x >= 4096*256 || y >= 4096*256) return 9999;
+
+	int i    = x / 4096;
+	int j    = y / 4096;
+	int xmod = x % 4096;
+	int ymod = y % 4096;
+
+//printf("x = %d, y = %d, i = %d, j = %d, xmod = %d, ymod = %d\n", x, y, i, j, xmod, ymod);
+
+	if(ymod == 0){
+		j--;
+		ymod = 4096;
+//printf("j--\n");
+	}
+
+	if(xmod == 0 || xmod == 2048){
+//printf("xmod++\n");
+		xmod++;
+	}
+
+	int block1 = getBlock(i, j+1);
+	int block2 = getBlock(i, j);
+	int block3 = getBlock(i, j-1);
+
+//printf("%d %d blocks = %d %d %d\n", i, j, block1, block2, block3);
+
+	int profile1 = blockProfile(block1);
+	int profile2 = blockProfile(block2);
+	int profile3 = blockProfile(block3);
+
+//printf("profiles = %d %d %d\n", profile1, profile2, profile3);
+
+	return surfacePingDown(xmod, ymod, profile1, profile2, profile3, normal);
+
+}
+
+int probeRight(int x, int y, int * normal) {
+
+	int i    = x / 4096;
+	int j    = y / 4096;
+	int xmod = x % 4096;
+	int ymod = y % 4096;
+
+	int xmod2 =        ymod;
+	int ymod2 = 4096 - xmod;
+
+	if(ymod2 == 0){ // impossible
+		i++;
+		ymod2 = 4096;
+	}
+
+	if(xmod2 == 0 || xmod2 == 2048){
+		xmod2++;
+	}
+
+	int block1 = getBlock(i-1, j);
+	int block2 = getBlock(i,   j);
+	int block3 = getBlock(i+1, j);
+
+	int profile1 = rotateProfile(blockProfile(block1));
+	int profile2 = rotateProfile(blockProfile(block2));
+	int profile3 = rotateProfile(blockProfile(block3));
+
+	int n;
+	int ping = surfacePingDown(xmod2, ymod2, profile1, profile2, profile3, &n);
+
+	*normal = normalizeNormalCode(n + 1024);
+	return ping;
+
+}
+
+int probeUp(int x, int y, int * normal) {
+
+	int i    = x / 4096;
+	int j    = y / 4096;
+	int xmod = x % 4096;
+	int ymod = y % 4096;
+
+	int xmod2 = 4096 - xmod;
+	int ymod2 = 4096 - ymod;
+
+	if(ymod2 == 0){ // impossible
+		j++;
+		ymod2 = 4096;
+	}
+
+	if(xmod2 == 0 || xmod2 == 2048){
+		xmod2++;
+	}
+
+	int block1 = getBlock(i, j-1);
+	int block2 = getBlock(i, j);
+	int block3 = getBlock(i, j+1);
+
+	int profile1 = rotateProfile(rotateProfile(blockProfile(block1)));
+	int profile2 = rotateProfile(rotateProfile(blockProfile(block2)));
+	int profile3 = rotateProfile(rotateProfile(blockProfile(block3)));
+
+	int n;
+	int ping = surfacePingDown(xmod2, ymod2, profile1, profile2, profile3, &n);
+
+	*normal = normalizeNormalCode(n + 2048);
+	return ping;
+
+}
+
+int probeLeft(int x, int y, int * normal) {
+
+	int i    = x / 4096;
+	int j    = y / 4096;
+	int xmod = x % 4096;
+	int ymod = y % 4096;
+
+	int xmod2 = 4096 - ymod;
+	int ymod2 =        xmod;
+
+	if(ymod2 == 0){
+		i--;
+		ymod2 = 4096;
+	}
+
+	if(xmod2 == 0 || xmod2 == 2048){
+		xmod2++;
+	}
+
+	int block1 = getBlock(i+1, j);
+	int block2 = getBlock(i,   j);
+	int block3 = getBlock(i-1, j);
+
+	int profile1 = rotateProfile(rotateProfile(rotateProfile(blockProfile(block1))));
+	int profile2 = rotateProfile(rotateProfile(rotateProfile(blockProfile(block2))));
+	int profile3 = rotateProfile(rotateProfile(rotateProfile(blockProfile(block3))));
+
+	int n;
+	int ping = surfacePingDown(xmod2, ymod2, profile1, profile2, profile3, &n);
+
+	*normal = normalizeNormalCode(n - 1024);
+	return ping;
+
+}

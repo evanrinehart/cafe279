@@ -70,3 +70,13 @@ int measureCavity(int i, int j);
 
 void addRoom(int id, int air, int volume);
 struct Room * roomById(int id);
+
+
+
+
+// surface probes, return distance from x y to surface in some direction
+// if x y is inside a solid, result is negative.
+int probeDown(int x, int y, int * n);
+int probeUp(int x, int y, int * n);
+int probeLeft(int x, int y, int * n);
+int probeRight(int x, int y, int * n);
