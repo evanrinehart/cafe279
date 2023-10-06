@@ -3,6 +3,10 @@ void initializeEverything(void);
 int enableServer();
 void shutdownEverything();
 
+void pressWASD(char wasd, int down);
+void pressJ(int down);
+void pressK(int down);
+
 void pressP();
 void pressH();
 void pressC();
@@ -18,7 +22,6 @@ void pressR();
 void pressLeft();
 void pressRight();
 
-void pressWASD(char wasd, int down);
 void pressNumber(int i);
 
 void clickTile(int i, int j, int ctrl);

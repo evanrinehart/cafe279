@@ -27,6 +27,8 @@
 
 #include <sync.h>
 
+#include <avatar.h>
+
 struct Megaman megaman;
 
 static int stillCalling = 0;
@@ -34,6 +36,7 @@ static int callingTimer = 240;
 static bool clientEn = false;
 
 void initializeEverything(){
+	avatarInit();
 	finishChunkLoading();
 }
 
@@ -268,21 +271,6 @@ void pressLeft(){
 }
 
 void pressRight(){
-}
-
-double xvel = 0;
-double xacc = 0;
-double xvelR = 0;
-double xvelL = 0;
-
-void pressWASD(char wasd, int down){
-	printf("%c %s\n", wasd, down ? "down" : "up");
-	if(wasd=='a') xvelL = down;
-	if(wasd=='d') xvelR = down;
-	xacc = (xvelR - xvelL) / 4;
-	if(xacc == 0) {
-		xvel = 0;
-	}
 }
 
 int chosen_block = 255;
@@ -535,14 +523,7 @@ void think(){
 
 	physics();
 
-	int MAX = 4;
-
-	xvel += xacc;
-	if(xvel >  MAX) xvel =  MAX;
-	if(xvel < -MAX) xvel = -MAX;
-	megaman.x += xvel;
-
-	//printf("xvel = %lf\n", xvel);
+	avatarThink();
 
 	updateLoose();
 
@@ -569,4 +550,20 @@ void spawnItem(double x, double y){
 	item.spin = 0;
 
 	addLooseItem(&item);
+}
+
+
+
+
+
+void pressJ(int down){
+	avatarAction(down);
+}
+
+void pressK(int down){
+	avatarJump(down);
+}
+
+void pressWASD(char wasd, int down){
+	avatarWASD(wasd, down);
 }

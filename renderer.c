@@ -28,6 +28,8 @@
 
 #include <misc.h>
 
+#include <avatar.h>
+
 vec2 screenToWorld(double screenX, double screenY);
 void getViewBounds(double *l, double *r, double *b, double *t);
 void drawVerticalRule(double worldX, Color c);
@@ -43,8 +45,6 @@ void drawBall(vec2 p, double r, Color c);
 void drawUISprite(Texture tex, double x, double y, double zoom);
 
 void drawSpriteBase(Texture tex, vec2 p, int flip);
-
-void drawMegaman(vec2 p, int flip);
 
 enum Overlay {
 	NO_OVERLAY,
@@ -80,6 +80,9 @@ struct World world;
 static Texture mmtex;
 static Texture statstex;
 static Texture tilesetTex;
+
+static Texture spidey1;
+static Texture spidey2;
 
 enum Tool {BLOCK_EDIT_TOOL};
 
@@ -155,6 +158,11 @@ int loadAssets(){
 	mmtex = LoadTexture("assets/megaman.png");
 	SetTextureWrap(mmtex, TEXTURE_WRAP_CLAMP);
 	megaman.height = mmtex.height;
+
+	spidey1 = LoadTexture("assets/spidey1.png");
+	spidey2 = LoadTexture("assets/spidey2.png");
+	SetTextureWrap(spidey1, TEXTURE_WRAP_CLAMP);
+	SetTextureWrap(spidey2, TEXTURE_WRAP_CLAMP);
 
 	// hacked trilinear settings looks good when items are not actively rotating
 	circuitTex = LoadTexture("assets/icons/circuitboard.png");
@@ -331,11 +339,13 @@ void drawSpriteH(Texture tex, vec2 p, int flip){
 }
 
 void drawSpriteBase(Texture tex, vec2 p, int flip){
-	vec2 wcorner = {p.x - tex.width/2, p.y + tex.height};
+	vec2 wcorner    = {p.x - tex.width/2, p.y + tex.height};
 	Vector2 scorner = worldToScreen(wcorner);
 
-	Rectangle src = {0, 0, tex.width, tex.height};
-	Rectangle dst = {scorner.x, scorner.y, tex.width*zoom, tex.height*zoom};
+	Rectangle src = {0, 0, (flip ? -1 : 1) * tex.width, tex.height};
+	// scorner here could be floored to align sprite with screen pixels
+	// if it becomes necessary (graphics coming from sprite sheet and nearby graphics bleed in)
+	Rectangle dst = {scorner.x , scorner.y, tex.width*zoom, tex.height*zoom};
 	Vector2 zero = {0,0};
 
 	DrawTexturePro(tex, src, dst, zero, 0.0, WHITE);
@@ -384,7 +394,7 @@ void leftClick(vec2 p, int down){
 		int measure = probeDown(x,y, &normal);
 		printf("click %d:%d %d:%d measure = %d, normal = %d\n", x/256, x%256, y/256, y%256, measure, normal);
 
-		spawnItem(q.x, q.y);
+		//spawnItem(q.x, q.y);
 	}
 
 	int ctrl = IsKeyDown(KEY_LEFT_CONTROL);
@@ -392,7 +402,7 @@ void leftClick(vec2 p, int down){
 	if(down){
 		int i = REDUCE(q.x) + 128;
 		int j = REDUCE(q.y) + 128;
-		//clickTile(i,j,ctrl);
+		clickTile(i,j,ctrl);
 	}
 /*
 	if(down){
@@ -568,6 +578,11 @@ void dispatchInput(){
 
 
 	// keyboard
+	if(IsKeyPressed(KEY_J)){ pressJ(1); }
+	if(IsKeyPressed(KEY_K)){ pressK(1); }
+	if(IsKeyReleased(KEY_J)){ pressJ(0); }
+	if(IsKeyReleased(KEY_K)){ pressK(0); }
+
 	if(IsKeyPressed(KEY_G)){ pressG(); }
 	if(IsKeyPressed(KEY_R)){ pressR(); }
 	if(IsKeyPressed(KEY_PAUSE)){ pressPause(); }
@@ -849,8 +864,20 @@ void drawLooseItem(struct LooseItem * item){
 	drawSpriteWidth(circuitTexBL, p, 48/12, rot);
 }
 
-void drawMegaman(vec2 p, int flip){
-	drawSpriteBase(mmtex, p, flip);
+void drawMegaman() {
+	double x = raw2world(player.rx);
+	double y = raw2world(player.ry);
+	//printf("x = %f, y = %f\n", x, y);
+	Texture tex = player.grounded ? spidey1 : spidey2;
+	drawSpriteBase(tex, vec2(x,y), player.facing < 0);
+
+	//drawHorizontalRule(y, RED);
+	drawHorizontalRule(raw2world(player.probe1), BLUE);
+	drawHorizontalRule(raw2world(player.probe2), BLUE);
+	drawVerticalRule(raw2world(player.probe3), GREEN);
+	drawVerticalRule(raw2world(player.probe4), GREEN);
+	drawHorizontalRule(raw2world(player.probe5), MAROON);
+	drawHorizontalRule(raw2world(player.probe6), MAROON);
 }
 
 
@@ -885,8 +912,8 @@ void rerenderEverything(){
 	/* * tiles * */
 	renderTiles();
 
-	/* * megaman * */
-	drawMegaman(vec2(megaman.x, 8), megaman.facing < 0);
+	/* * avatar * */
+	drawMegaman();
 
 	for(struct LooseItem *ptr = looseItems; ptr < looseItems_ptr; ptr++){
 		drawLooseItem(ptr);

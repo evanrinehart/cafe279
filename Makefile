@@ -30,7 +30,8 @@ OBJECTS = \
 	messages.o \
 	sync.o \
 	items.o \
-	doodad.o
+	doodad.o \
+	avatar.o
 
 EXE_NAME = game
 
@@ -45,20 +46,22 @@ main.o :      $(addprefix include/, linear.h renderer.h brain.h loader.h engine.
 brain.o :     $(addprefix include/, engine.h linear.h sound.h physics.h chunk.h megaman.h doodad.h network.h messages.h clocks.h misc.h items.h)
 physics.o :   $(addprefix include/, linear.h doodad.h physics.h chunk.h misc.h)
 doodad.o :    $(addprefix include/, linear.h doodad.h)
-items.o :    $(addprefix include/, linear.h items.h)
+items.o :     $(addprefix include/, linear.h items.h)
 chunk.o :     $(addprefix include/, linear.h chunk.h floodfill.h bsod.h)
 linear.o :    include/linear.h
 clocks.o :    include/clocks.h
 floodfill.o : include/floodfill.h
 messages.o :  include/messages.h
 misc.o :      include/misc.h
-renderer.o :  $(addprefix include/, raylib.h linear.h engine.h doodad.h megaman.h chunk.h renderer.h bsod.h physics.h sound.h brain.h items.h misc.h)
+renderer.o :  $(addprefix include/, raylib.h linear.h engine.h doodad.h megaman.h chunk.h renderer.h bsod.h physics.h sound.h brain.h items.h misc.h avatar.h )
 sound.o :     $(addprefix include/, raylib.h sound.h)
 loader.o :    $(addprefix include/, loader.h sqlite3.h linear.h doodad.h megaman.h chunk.h)
 network.o :   $(addprefix include/, enet/enet.h network.h)
 nullsound.o : $(addprefix include/, sound.h)
 nullrenderer.o :
 sync.o :      $(addprefix include/, sync.h clocks.h messages.h network.h)
+
+avatar.o :    $(addprefix include/, avatar.h linear.h chunk.h)
 
 # define a custom pattern rule to compile D files in the same way C files are
 #%.o : %.d ; $(DC) -fno-druntime -c $<
