@@ -70,9 +70,64 @@ void millisleep(int n){
 	usleep(n * 1000);
 }
 
-/*
-static void test(){
 
+long getMillisecondsPastMidnightUTCPlus(int hours) {
+	struct timespec ts;
+	clock_gettime(CLOCK_REALTIME, &ts);
+
+	long million = 1000 * 1000;
+	long seconds = (ts.tv_sec + hours * 3600) % 86400;
+	long millis  = ts.tv_nsec / million;
+
+	return seconds * 1000 + millis;
+}
+
+long getInternetTimePrecise() {
+
+	long ms = getMillisecondsPastMidnightUTCPlus(1);
+	long beats = ms / 86400;
+	long parts = ms % 86400;
+	long milli = 1000 * parts / 86400;
+
+	return beats * 1000 + milli;
+
+}
+
+int getInternetTime() {
+
+	time_t t = time(NULL);
+	struct tm * broken = gmtime(&t);
+
+	if(broken == NULL){
+		printf("gmtime_r failed\n");
+		return 0;
+	}
+
+	printf(
+		"(struct tm){sec=%d,min=%d,hour=%d,mday=%d,mon=%d,year=%d-1900,wday=%d,yday=%d,isdst=%d}\n",
+		broken->tm_sec,
+		broken->tm_min,
+		broken->tm_hour,
+		broken->tm_mday,
+		broken->tm_mon,
+		broken->tm_year + 1900,
+		broken->tm_wday,
+		broken->tm_yday,
+		broken->tm_isdst
+	);
+
+	int hours   = (broken->tm_hour + 1) % 24;
+	int minutes = broken->tm_min;
+	int seconds = broken->tm_sec;
+
+	int total = hours * 3600 + minutes * 60 + seconds;
+
+	return 10 * total / 864;
+
+}
+
+static void test(){
+/*
 	setStartTime(chron());
 
 	struct Nano n1 = chron();
@@ -96,5 +151,5 @@ static void test(){
 	double e = (5e6 + m2) - (5e6 + m1);
 	printf("m2-m1 = %.18lf\n", e);
 
-}
 */
+}
